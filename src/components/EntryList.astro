@@ -1,0 +1,87 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import EntryPreview from './EntryPreview.astro';
+import ProjectCard from './ProjectCard.astro';
+
+interface Props {
+	entries: CollectionEntry<'entries'>[];
+	layout?: 'list' | 'grid' | 'compact' | 'catalogue' | 'projects';
+	activeTag?: string;
+}
+
+const { entries, layout = 'list', activeTag } = Astro.props;
+const previewLayout =
+	layout === 'compact' || layout === 'catalogue' ? layout : 'standard';
+---
+
+<ol class:list={['entry-list', `entry-list--${layout}`]}>
+	{
+		entries.map((entry) => (
+			<li>
+				{layout === 'projects' ? (
+					<ProjectCard project={entry} />
+				) : (
+					<EntryPreview
+						entry={entry}
+						layout={previewLayout}
+						activeTag={activeTag}
+					/>
+				)}
+			</li>
+		))
+	}
+</ol>
+
+<style>
+	.entry-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.entry-list--list > li,
+	.entry-list--grid > li {
+		padding: 0 0 2.7rem;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.entry-list--list > li + li,
+	.entry-list--grid > li + li {
+		padding-top: 2.7rem;
+	}
+
+	.entry-list--compact > li {
+		border-bottom: 1px solid var(--line);
+	}
+
+	.entry-list--compact > li:first-child,
+	.entry-list--catalogue > li:first-child {
+		border-top: 1px solid var(--line);
+	}
+
+	.entry-list--catalogue > li {
+		padding: 2.25rem 0;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.entry-list--projects {
+		display: grid;
+		gap: 1.25rem;
+	}
+
+	@media (min-width: 48rem) {
+		.entry-list--grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			column-gap: clamp(2.5rem, 5vw, 4rem);
+		}
+
+		.entry-list--grid > li + li {
+			padding-top: 0;
+		}
+
+		.entry-list--grid > li:nth-child(n + 3) {
+			padding-top: 2.7rem;
+		}
+	}
+</style>

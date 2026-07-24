@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 430" width="720" height="430">
+  <rect width="720" height="430" fill="#edf2f2"/>
+  <path d="M0 348c120-38 213-38 319 0s235 38 401-5" fill="none" stroke="#d3dddd" stroke-width="2" stroke-dasharray="8 9"/>
+  <rect x="152" y="77" width="201" height="294" rx="28" fill="#fafaf8" stroke="#2c5c7c" stroke-width="3"/>
+  <rect x="171" y="107" width="163" height="213" rx="4" fill="#e0e9ea"/>
+  <path d="M194 281l38-52 35 14 43-76" fill="none" stroke="#2c5c7c" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <circle cx="194" cy="281" r="10" fill="#2c5c7c"/><circle cx="310" cy="167" r="10" fill="#fafaf8" stroke="#2c5c7c" stroke-width="5"/>
+  <path d="M235 338h35" stroke="#b9c8cb" stroke-linecap="round" stroke-width="4"/>
+  <path d="M353 216c64-2 72 30 117 30" fill="none" stroke="#83999f" stroke-width="3" stroke-dasharray="5 7"/>
+  <circle cx="527" cy="245" r="73" fill="#fafaf8" stroke="#2c5c7c" stroke-width="3"/>
+  <circle cx="527" cy="245" r="23" fill="#2c5c7c"/>
+  <path d="M477 185c-19-21-46-10-48 12M577 185c19-21 46-10 48 12M477 305c-19 21-46 10-48-12M577 305c19 21 46 10 48-12" fill="none" stroke="#83999f" stroke-linecap="round" stroke-width="3"/>
+  <path d="M106 66h30M106 81h18M581 342h38M593 357h26" stroke="#a7b6b9" stroke-linecap="round" stroke-width="2"/>
+</svg>

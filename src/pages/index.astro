@@ -1,11 +1,136 @@
 ---
-import Welcome from '../components/Welcome.astro';
+import { getEntry, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import PortraitImage from '../assets/portrait.jpg';
 import Layout from '../layouts/Layout.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const home = await getEntry('pages', 'home');
+if (!home) throw new Error('Homepage content was not found.');
+const { Content } = await render(home);
 ---
 
-<Layout>
-	<Welcome />
+<Layout title={home.data.title} description={home.data.description}>
+	<div class="home-shell">
+		<section class="intro" aria-labelledby="intro-heading">
+			<div class="portrait-wrap">
+				<Image
+					class="portrait"
+					src={PortraitImage}
+					alt="Headshot of James inside his high school campus"
+					width="240"
+					height="240"
+					fetchpriority="high"
+				/>
+			</div>
+
+			<p class="eyebrow">Hello, I’m</p>
+			<h1 class="person-name" id="intro-heading">
+				James Zheng<span aria-hidden="true">.</span>
+			</h1>
+			<div class="intro-copy"><Content /></div>
+		</section>
+
+		<nav class="contact-strip" aria-label="Contact links">
+			<a href="https://github.com/endernoke">GitHub</a>
+			<a href="https://www.linkedin.com/in/james-zheng-zi">LinkedIn</a>
+			<a href="https://x.com/endernoke">X</a>
+			<a href="mailto:zhengzijames@gmail.com">Email</a>
+		</nav>
+	</div>
 </Layout>
+
+<style>
+	.home-shell {
+		width: min(100% - 2.5rem, 42rem);
+		margin-inline: auto;
+		padding-block: clamp(2.5rem, 6vh, 4rem) clamp(2rem, 4vh, 3rem);
+	}
+
+	.intro {
+		position: relative;
+		display: flow-root;
+	}
+
+	.portrait-wrap {
+		float: right;
+		width: clamp(8rem, 25vw, 10.5rem);
+		margin: 0.1rem 0 2rem 2.5rem;
+	}
+
+	.portrait {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: 50%;
+	}
+
+	.portrait-note {
+		display: block;
+		margin-top: 0.65rem;
+		color: var(--muted);
+		font-size: 0.62rem;
+		letter-spacing: 0.13em;
+		text-align: center;
+	}
+
+	h1 {
+		margin: 0 0 1.8rem;
+		font-weight: 500;
+		letter-spacing: -0.065em;
+		line-height: 0.93;
+	}
+
+	h1 span {
+		color: var(--accent);
+	}
+
+	.intro-copy {
+		font-size: clamp(1.05rem, 2.5vw, 1.17rem);
+		line-height: 1.72;
+	}
+
+	.intro-copy :global(p) {
+		margin: 0 0 1.05rem;
+	}
+
+	.intro-copy :global(strong) {
+		font-weight: 500;
+	}
+
+	.contact-strip {
+		display: flex;
+		width: 100%;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		gap: clamp(0.75rem, 2vw, 1.15rem);
+		margin: clamp(1.5rem, 4vh, 2.25rem) 0 0;
+		font-size: 0.82rem;
+		text-align: left;
+	}
+
+	.contact-strip a {
+		color: var(--ink);
+		text-decoration: none;
+	}
+
+	.contact-strip a:hover {
+		color: var(--accent);
+		text-decoration: underline;
+	}
+
+	@media (max-width: 44rem) {
+		.home-shell {
+			width: min(100% - 2rem, 42rem);
+		}
+
+		.portrait-wrap {
+			float: none;
+			width: 7.5rem;
+			margin: 0 0 2.8rem;
+		}
+
+		.portrait-note {
+			text-align: left;
+		}
+	}
+</style>

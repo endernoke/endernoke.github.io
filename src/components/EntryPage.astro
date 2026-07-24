@@ -1,0 +1,222 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import { formatDate } from '../utils/date';
+
+interface Props {
+	entry: CollectionEntry<'entries'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const allEntries = await getCollection('entries', ({ data }) => !data.draft);
+const relatedEntries = entry.data.related
+	.map((id) => allEntries.find((candidate) => candidate.id === id))
+	.filter((candidate): candidate is CollectionEntry<'entries'> =>
+		Boolean(candidate),
+	);
+const routes = { project: 'projects', blog: 'blog', thought: 'misc' } as const;
+const kindLabels = {
+	project: 'Build log',
+	blog: 'Essay',
+	thought: 'Notebook entry',
+} as const;
+---
+
+<Layout
+	title={`${entry.data.title} — James Zheng`}
+	description={entry.data.description}
+	entry
+>
+	<article class="entry-shell">
+		<a class="back-link" href={`/${routes[entry.data.kind]}`}
+			><span class="back-link__chevron" aria-hidden="true">‹</span>{
+				routes[entry.data.kind] === 'misc'
+					? 'Misc'
+					: routes[entry.data.kind][0].toUpperCase() +
+						routes[entry.data.kind].slice(1)
+			}</a
+		>
+		<header class="entry-header">
+			<h1>{entry.data.title}</h1>
+			<div class="entry-meta">
+				<time datetime={entry.data.date.toISOString()}
+					>{formatDate(entry.data.date)}</time
+				>
+				{
+					entry.data.tags.length > 0 && (
+						<ul class="tag-list" aria-label="Tags">
+							{entry.data.tags.map((tag) => (
+								<li>
+									<a
+										class="tag"
+										href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
+									>
+										{tag}
+									</a>
+								</li>
+							))}
+						</ul>
+					)
+				}
+			</div>
+		</header>
+
+		{
+			entry.data.image && (
+				<figure class="entry-image">
+					<Image src={entry.data.image} alt={entry.data.imageAlt ?? ''} />
+				</figure>
+			)
+		}
+
+		<div class="prose entry-prose">
+			<Content />
+		</div>
+
+		{
+			relatedEntries.length > 0 && (
+				<aside class="related" aria-labelledby="related-heading">
+					<h2 id="related-heading">See also</h2>
+					<ul>
+						{relatedEntries.map((related) => (
+							<li>
+								<a href={`/${routes[related.data.kind]}/${related.id}`}>
+									<span>{related.data.title}</span>
+									<small>{kindLabels[related.data.kind]}</small>
+								</a>
+							</li>
+						))}
+					</ul>
+				</aside>
+			)
+		}
+	</article>
+</Layout>
+
+<style>
+	.entry-shell {
+		width: min(100% - 2.5rem, 45rem);
+		margin-inline: auto;
+		padding-block: clamp(1.75rem, 4vw, 3rem) 6rem;
+	}
+
+	.back-link {
+		margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
+	}
+
+	.entry-header {
+		margin-bottom: 3.4rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-family: var(--serif);
+		font-size: clamp(2.75rem, 9vw, 5rem);
+		font-weight: 600;
+		letter-spacing: -0.045em;
+		line-height: 0.98;
+	}
+
+	.entry-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.85rem 1.5rem;
+		margin-top: clamp(1.25rem, 3vw, 1.7rem);
+		padding-top: 1rem;
+		border-top: 1px solid var(--line);
+		color: var(--muted);
+		font-family: var(--sans);
+		font-size: 0.78rem;
+	}
+
+	.entry-meta time {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.entry-image {
+		width: 100%;
+		margin: 0 0 3.7rem;
+	}
+
+	.entry-image img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border: 1px solid var(--line);
+	}
+
+	.entry-prose :global(> p:first-child::first-letter) {
+		float: left;
+		margin: 0.08em 0.08em 0 0;
+		color: var(--ink);
+		font-size: 3.5em;
+		font-weight: 600;
+		line-height: 0.78;
+	}
+
+	.related {
+		margin-top: 5.5rem;
+		padding-top: 2.4rem;
+		border-top: 1px solid var(--line);
+		font-family: var(--sans);
+	}
+
+	.related h2 {
+		margin: 0 0 1rem;
+		font-size: 1.45rem;
+		font-weight: 500;
+		letter-spacing: -0.02em;
+	}
+
+	.related ul {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.related a {
+		display: flex;
+		min-height: 7rem;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 1rem;
+		border: 1px solid var(--line);
+		color: var(--ink);
+		text-decoration: none;
+	}
+
+	.related a:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+		background: var(--soft-blue);
+	}
+
+	.related small {
+		color: var(--muted);
+		font-size: 0.68rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	@media (max-width: 36rem) {
+		.entry-shell {
+			width: min(100% - 2rem, 45rem);
+		}
+
+		.entry-meta {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+
+		.related ul {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

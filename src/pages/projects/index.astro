@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import EntryList from '../../components/EntryList.astro';
+import Layout from '../../layouts/Layout.astro';
+
+const projects = (
+	await getCollection(
+		'entries',
+		({ data }) => data.kind === 'project' && !data.draft,
+	)
+).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Layout
+	title="Projects - James Zheng"
+	description="Select software projects I've made. I try to make useful things."
+>
+	<div class="index-shell">
+		<header class="page-heading">
+			<h1>Projects</h1>
+			<p>I try to make useful things.</p>
+		</header>
+
+		<EntryList entries={projects} layout="projects" />
+	</div>
+</Layout>

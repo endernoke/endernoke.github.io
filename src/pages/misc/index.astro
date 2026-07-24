@@ -1,0 +1,71 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import EntryList from '../../components/EntryList.astro';
+import WorldMap from '../../components/WorldMap.astro';
+import Layout from '../../layouts/Layout.astro';
+
+const thoughts = (
+	await getCollection(
+		'entries',
+		({ data }) => data.kind === 'thought' && !data.draft,
+	)
+).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Layout title="Misc - James Zheng" description="Cool things about me.">
+	<div class="index-shell">
+		<header class="page-heading">
+			<h1>Miscellaneous</h1>
+			<p>
+				Cool things about me.<br />This page is still under construction; you
+				get to see a preview of it :)
+			</p>
+		</header>
+
+		<!-- <section aria-labelledby="thoughts-heading">
+			<h2 class="section-title" id="thoughts-heading">Random thoughts</h2>
+			<EntryList entries={thoughts} layout="compact" />
+		</section>
+
+		<hr class="section-rule" /> -->
+		<section aria-labelledby="map-heading">
+			<div class="section-intro">
+				<h2 class="section-title" id="map-heading">Places I've been to</h2>
+			</div>
+			<WorldMap />
+		</section>
+	</div>
+</Layout>
+
+<style>
+	.section-intro {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 2rem;
+		margin-bottom: 1.3rem;
+	}
+
+	.section-intro .section-title {
+		margin-bottom: 0;
+	}
+
+	.section-intro > p {
+		max-width: 20rem;
+		margin: 0 0 0.15rem;
+		color: var(--muted);
+		font-size: 0.8rem;
+		text-align: right;
+	}
+
+	@media (max-width: 40rem) {
+		.section-intro {
+			display: block;
+		}
+
+		.section-intro > p {
+			margin-top: 0.5rem;
+			text-align: left;
+		}
+	}
+</style>

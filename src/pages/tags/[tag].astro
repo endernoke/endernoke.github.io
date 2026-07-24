@@ -1,0 +1,74 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import EntryList from '../../components/EntryList.astro';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('entries', ({ data }) => !data.draft);
+	const tags = [
+		...new Set(
+			entries.flatMap((entry) =>
+				entry.data.tags.map((tag) => tag.toLowerCase()),
+			),
+		),
+	];
+	return tags.map((tag) => ({
+		params: { tag },
+		props: {
+			tag,
+			entries: entries.filter((entry) =>
+				entry.data.tags.some((candidate) => candidate.toLowerCase() === tag),
+			),
+		},
+	}));
+}
+
+interface Props {
+	tag: string;
+	entries: CollectionEntry<'entries'>[];
+}
+
+const { tag, entries } = Astro.props;
+const sortedEntries = entries.sort(
+	(a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+const displayTag =
+	entries
+		.flatMap((entry) => entry.data.tags)
+		.find((candidate) => candidate.toLowerCase() === tag) ?? tag;
+---
+
+<Layout
+	title={`${displayTag} — James Zheng`}
+	description={`Projects and writing tagged ${displayTag}.`}
+>
+	<div class="index-shell tag-shell">
+		<a class="back-link" href="/blog"
+			><span class="back-link__chevron" aria-hidden="true">‹</span>Back</a
+		>
+		<header class="page-heading">
+			<h1>{displayTag}</h1>
+			<p>
+				{sortedEntries.length}
+				{sortedEntries.length === 1 ? 'entry' : 'entries'} across the notebook.
+			</p>
+		</header>
+		<EntryList
+			entries={sortedEntries}
+			layout="catalogue"
+			activeTag={displayTag}
+		/>
+	</div>
+</Layout>
+
+<style>
+	.tag-shell {
+		position: relative;
+	}
+
+	.back-link {
+		position: absolute;
+		top: clamp(0.9rem, 2.5vw, 1.5rem);
+		left: 0;
+	}
+</style>

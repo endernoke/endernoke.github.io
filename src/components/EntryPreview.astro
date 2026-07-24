@@ -1,0 +1,181 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, formatShortDate } from '../utils/date';
+
+interface Props {
+	entry: CollectionEntry<'entries'>;
+	layout?: 'standard' | 'compact' | 'catalogue';
+	activeTag?: string;
+}
+
+const { entry, layout = 'standard', activeTag } = Astro.props;
+const routes = { project: 'projects', blog: 'blog', thought: 'misc' } as const;
+const href = `/${routes[entry.data.kind]}/${entry.id}`;
+const Heading = layout === 'compact' ? 'h3' : 'h2';
+const visibleTags =
+	layout === 'catalogue' && activeTag
+		? entry.data.tags.filter(
+				(tag) => tag.toLowerCase() !== activeTag.toLowerCase(),
+			)
+		: entry.data.tags;
+---
+
+<article class:list={['entry-preview', `entry-preview--${layout}`]}>
+	<div class="entry-meta">
+		<time datetime={entry.data.date.toISOString()}>
+			{
+				layout === 'compact'
+					? formatShortDate(entry.data.date)
+					: formatDate(entry.data.date)
+			}
+		</time>
+		{
+			layout === 'catalogue' && (
+				<span class="entry-kind">{entry.data.kind}</span>
+			)
+		}
+	</div>
+
+	<div class="entry-copy">
+		<Heading><a href={href}>{entry.data.title}</a></Heading>
+		{layout !== 'compact' && <p>{entry.data.description}</p>}
+	</div>
+
+	{
+		layout !== 'compact' && visibleTags.length > 0 && (
+			<ul
+				class="tag-list entry-tags"
+				aria-label={`Tags for ${entry.data.title}`}
+			>
+				{visibleTags.map((tag) => (
+					<li>
+						<a
+							class="tag"
+							href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
+						>
+							{tag}
+						</a>
+					</li>
+				))}
+			</ul>
+		)
+	}
+</article>
+
+<style>
+	.entry-meta time {
+		display: block;
+		color: var(--muted);
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+	}
+
+	.entry-kind {
+		display: block;
+		margin-top: 0.35rem;
+		color: var(--accent);
+		font-size: 0.68rem;
+		font-weight: 500;
+		letter-spacing: 0.11em;
+		text-transform: uppercase;
+	}
+
+	.entry-copy h2,
+	.entry-copy h3 {
+		margin: 0;
+		font-weight: 500;
+		letter-spacing: -0.025em;
+		line-height: 1.25;
+	}
+
+	.entry-copy h2 {
+		font-size: clamp(1.35rem, 3vw, 1.7rem);
+	}
+
+	.entry-copy h3 {
+		font-size: 1.08rem;
+	}
+
+	.entry-copy a {
+		color: var(--ink);
+		text-decoration: none;
+	}
+
+	.entry-copy a:hover {
+		color: var(--accent);
+		text-decoration: underline;
+	}
+
+	.entry-copy p {
+		max-width: 43rem;
+		margin: 0.65rem 0 1rem;
+		color: var(--muted);
+	}
+
+	.entry-preview--standard .entry-meta {
+		margin-bottom: 0.45rem;
+	}
+
+	.entry-preview--compact {
+		display: grid;
+		grid-template-columns: 8rem minmax(0, 1fr);
+		gap: 1.5rem;
+		align-items: baseline;
+		padding: 0.9rem 0;
+	}
+
+	.entry-preview--compact .entry-meta time {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.entry-preview--catalogue {
+		display: grid;
+		grid-template-columns: minmax(7rem, 0.34fr) minmax(0, 1.6fr) minmax(
+				10rem,
+				0.62fr
+			);
+		gap: clamp(1.5rem, 4vw, 3rem);
+		align-items: start;
+	}
+
+	.entry-preview--catalogue .entry-copy p {
+		max-width: 40rem;
+		margin-bottom: 0;
+	}
+
+	.entry-preview--catalogue .entry-tags {
+		align-content: start;
+	}
+
+	@media (max-width: 51.99rem) {
+		.entry-preview--catalogue {
+			display: block;
+		}
+
+		.entry-preview--catalogue .entry-meta {
+			display: flex;
+			align-items: baseline;
+			gap: 0.75rem;
+			margin-bottom: 0.45rem;
+		}
+
+		.entry-preview--catalogue .entry-kind {
+			margin-top: 0;
+		}
+
+		.entry-preview--catalogue .entry-copy p {
+			margin-bottom: 1rem;
+		}
+	}
+
+	@media (max-width: 40rem) {
+		.entry-preview--compact {
+			display: block;
+			padding-block: 1rem;
+		}
+
+		.entry-preview--compact .entry-meta {
+			margin-bottom: 0.25rem;
+		}
+	}
+</style>

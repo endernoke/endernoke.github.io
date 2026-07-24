@@ -1,0 +1,123 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+
+const entries = await getCollection('entries', ({ data }) => !data.draft);
+const entryPaths = entries.map(({ id, data }) => {
+	const section =
+		data.kind === 'project'
+			? 'projects'
+			: data.kind === 'thought'
+				? 'misc'
+				: 'blog';
+	return `/${section}/${id}`;
+});
+const randomDestinations = ['/', '/projects', '/blog', '/misc', ...entryPaths];
+---
+
+<Layout
+	title="Page not found - James Zheng"
+	description="This page could not be found."
+>
+	<section class="not-found" aria-labelledby="not-found-title">
+		<div class="not-found__content">
+			<h1 id="not-found-title">Page not found.</h1>
+			<div class="not-found__message">
+				<p>
+					This page isn’t here. It may have moved, been removed, or never
+					existed.
+				</p>
+				<p>
+					The <a href="https://www.ft.com/404">Financial Times</a> might have some
+					economic theories about what happened.
+				</p>
+			</div>
+
+			<nav aria-label="404 page options">
+				<a href="/">Go home</a>
+				<a
+					href={randomDestinations[0] ?? '/'}
+					data-random-link
+					data-random-destinations={JSON.stringify(randomDestinations)}
+				>
+					Random page
+				</a>
+			</nav>
+		</div>
+	</section>
+</Layout>
+
+<script>
+	const randomLink = document.querySelector('[data-random-link]');
+
+	if (randomLink instanceof HTMLAnchorElement) {
+		const destinations = JSON.parse(
+			randomLink.dataset.randomDestinations ?? '[]',
+		);
+		const destination =
+			destinations[Math.floor(Math.random() * destinations.length)];
+
+		if (destination) randomLink.href = destination;
+	}
+</script>
+
+<style>
+	:global(main) {
+		display: flex;
+	}
+
+	.not-found {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+		width: min(100% - 2.5rem, 42rem);
+		margin-inline: auto;
+		padding-block: 2.5rem;
+	}
+
+	.not-found__content {
+		width: min(100%, 32rem);
+		text-align: left;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: clamp(2.75rem, 8vw, 4.5rem);
+		font-weight: 500;
+		letter-spacing: -0.055em;
+		line-height: 1;
+	}
+
+	.not-found__message {
+		max-width: 32rem;
+		margin: 1.4rem 0 1.75rem;
+		color: var(--muted);
+		font-size: clamp(1rem, 2vw, 1.08rem);
+	}
+
+	.not-found__message p {
+		margin: 0 0 0.8rem;
+	}
+
+	.not-found__message p:last-child {
+		margin-bottom: 0;
+	}
+
+	nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.65rem clamp(1.25rem, 4vw, 2rem);
+	}
+
+	nav a {
+		font-size: 0.86rem;
+	}
+
+	@media (max-width: 40rem) {
+		.not-found {
+			width: min(100% - 2rem, 42rem);
+			padding-block: 2rem;
+		}
+	}
+</style>
