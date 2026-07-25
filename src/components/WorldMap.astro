@@ -226,11 +226,27 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 					>
 						<header class="place-card-header">
 							<h3 id={`${place.id}-title`}>{place.name}</h3>
-							{place.photos.length > 1 && (
-								<span class="slide-count" aria-live="polite" aria-atomic="true">
-									1 / {place.photos.length}
-								</span>
-							)}
+							<div class="place-card-actions">
+								{place.photos.length > 1 && (
+									<span
+										class="slide-count"
+										aria-live="polite"
+										aria-atomic="true"
+									>
+										1 / {place.photos.length}
+									</span>
+								)}
+								<button
+									class="place-card-close"
+									type="button"
+									data-place-close
+									aria-label={`Close ${place.name} album`}
+								>
+									<svg viewBox="0 0 16 16" aria-hidden="true">
+										<path d="m3.5 3.5 9 9m0-9-9 9" />
+									</svg>
+								</button>
+							</div>
 						</header>
 						<div class="slides" aria-labelledby={`${place.id}-title`}>
 							{place.photos.map((item, index) => (
@@ -299,6 +315,8 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 <script>
 	const markers = document.querySelectorAll<HTMLButtonElement>('.marker');
 	const carousels = document.querySelectorAll<HTMLElement>('[data-carousel]');
+	const closeButtons =
+		document.querySelectorAll<HTMLButtonElement>('[data-place-close]');
 	const placePicker = document.querySelector<HTMLSelectElement>(
 		'[data-place-picker]',
 	);
@@ -645,6 +663,16 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 			placePicker.value = marker.getAttribute('aria-controls') ?? '';
 	};
 
+	closeButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const marker = button
+				.closest<HTMLElement>('.place')
+				?.querySelector<HTMLButtonElement>('.marker');
+			closeAll();
+			marker?.focus();
+		});
+	});
+
 	markers.forEach((marker) => {
 		const panel = document.getElementById(
 			marker.getAttribute('aria-controls') ?? '',
@@ -857,7 +885,9 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		top: var(--marker-y);
 		left: var(--marker-x);
 		z-index: 2;
-		transition: transform 180ms ease;
+		transition:
+			margin-left 180ms ease,
+			margin-top 180ms ease;
 	}
 
 	.place.is-clustered:not(.is-spiderfied) .marker {
@@ -866,7 +896,9 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	.place.is-spiderfied {
-		transform: translate(var(--spider-offset-x), var(--spider-offset-y));
+		/* Keep this element untransformed: it contains the viewport-fixed mobile card. */
+		margin-top: var(--spider-offset-y);
+		margin-left: var(--spider-offset-x);
 	}
 
 	.place:hover,
@@ -971,6 +1003,13 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		border-bottom: 1px solid var(--line);
 	}
 
+	.place-card-actions {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 0.7rem;
+	}
+
 	h3 {
 		margin: 0;
 		font-size: 0.92rem;
@@ -984,6 +1023,32 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		font-size: 0.68rem;
 		font-variant-numeric: tabular-nums;
 		letter-spacing: 0.06em;
+	}
+
+	.place-card-close {
+		display: grid;
+		width: 1.7rem;
+		height: 1.7rem;
+		padding: 0;
+		border: 0;
+		place-items: center;
+		color: var(--muted);
+		background: transparent;
+		cursor: pointer;
+	}
+
+	.place-card-close:hover,
+	.place-card-close:focus-visible {
+		color: var(--accent);
+	}
+
+	.place-card-close svg {
+		width: 0.8rem;
+		height: 0.8rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-width: 1.5;
 	}
 
 	.slides {
@@ -1109,14 +1174,22 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 
 		.place-card {
 			position: fixed;
-			right: 1rem;
-			bottom: 1rem;
-			left: 1rem;
+			right: max(1rem, env(safe-area-inset-right));
+			bottom: max(1rem, env(safe-area-inset-bottom));
+			left: max(1rem, env(safe-area-inset-left));
 			z-index: 20;
 			width: auto;
-			max-height: calc(100dvh - 2rem);
+			max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
 			overflow-y: auto;
+			overscroll-behavior: contain;
 			transform: none;
+		}
+
+		.place-card-header {
+			position: sticky;
+			top: 0;
+			z-index: 1;
+			background: var(--paper);
 		}
 
 		.slides {
