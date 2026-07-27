@@ -29,7 +29,7 @@ const kindLabels = {
 	description={entry.data.description}
 	entry
 >
-	<article class="entry-shell">
+	<article class="entry-shell" data-entry-content>
 		<a class="back-link" href={`/${routes[entry.data.kind]}`}
 			><span class="back-link__chevron" aria-hidden="true">‹</span>{
 				routes[entry.data.kind] === 'misc'
@@ -74,6 +74,7 @@ const kindLabels = {
 		<div class="prose entry-prose">
 			<Content />
 		</div>
+		<span class="entry-end-sentinel" data-entry-end aria-hidden="true"></span>
 
 		{
 			relatedEntries.length > 0 && (
@@ -94,6 +95,108 @@ const kindLabels = {
 		}
 	</article>
 </Layout>
+
+<script>
+	import { trackEvent } from '../scripts/analytics';
+
+	const entry = document.querySelector<HTMLElement>('[data-entry-content]');
+	const entryEnd = entry?.querySelector<HTMLElement>('[data-entry-end]');
+
+	if (entry && entryEnd) {
+		const milestones = [
+			{ milliseconds: 15_000, name: 'entry-engaged-15s', tracked: false },
+			{ milliseconds: 60_000, name: 'entry-engaged-60s', tracked: false },
+		];
+		let accumulatedVisibleTime = 0;
+		let visibleSince =
+			document.visibilityState === 'visible' ? performance.now() : null;
+		let endIsVisible = false;
+		let endVisibleSince: number | null = null;
+		let endTracked = false;
+
+		const visibleTime = () =>
+			accumulatedVisibleTime +
+			(visibleSince === null ? 0 : performance.now() - visibleSince);
+
+		const recordProgress = () => {
+			const elapsed = visibleTime();
+			milestones.forEach((milestone) => {
+				if (!milestone.tracked && elapsed >= milestone.milliseconds) {
+					milestone.tracked = true;
+					trackEvent(milestone.name);
+				}
+			});
+
+			if (
+				!endTracked &&
+				endIsVisible &&
+				endVisibleSince !== null &&
+				elapsed >= 15_000 &&
+				performance.now() - endVisibleSince >= 2000
+			) {
+				endTracked = true;
+				trackEvent('entry-end-reached');
+				endObserver.disconnect();
+			}
+		};
+
+		const endObserver = new IntersectionObserver(
+			([observedEnd]) => {
+				endIsVisible = observedEnd.isIntersecting;
+				endVisibleSince =
+					endIsVisible && document.visibilityState === 'visible'
+						? performance.now()
+						: null;
+				recordProgress();
+			},
+			{ threshold: 1 },
+		);
+		endObserver.observe(entryEnd);
+
+		const progressTimer = window.setInterval(recordProgress, 1000);
+
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') {
+				visibleSince = performance.now();
+				if (endIsVisible) endVisibleSince = performance.now();
+			} else {
+				if (visibleSince !== null)
+					accumulatedVisibleTime += performance.now() - visibleSince;
+				visibleSince = null;
+				endVisibleSince = null;
+			}
+			recordProgress();
+		});
+
+		entry
+			.querySelector<HTMLElement>('.entry-prose')
+			?.addEventListener('click', (event) => {
+				if (!(event.target instanceof Element)) return;
+				const link = event.target.closest<HTMLAnchorElement>('a[href]');
+				if (!link) return;
+
+				const destination = new URL(link.href, window.location.href);
+				if (
+					destination.origin !== window.location.origin &&
+					(destination.protocol === 'http:' ||
+						destination.protocol === 'https:')
+				) {
+					trackEvent('external-link-click', {
+						domain: destination.hostname,
+					});
+				}
+			});
+
+		window.addEventListener(
+			'pagehide',
+			() => {
+				window.clearInterval(progressTimer);
+				endObserver.disconnect();
+			},
+			{ once: true },
+		);
+	}
+</script>
 
 <style>
 	.entry-shell {
@@ -147,6 +250,13 @@ const kindLabels = {
 		width: 100%;
 		height: auto;
 		border: 1px solid var(--line);
+	}
+
+	.entry-end-sentinel {
+		display: block;
+		width: 1px;
+		height: 1px;
+		pointer-events: none;
 	}
 
 	.entry-prose :global(> p:first-child::first-letter) {

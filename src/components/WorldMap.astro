@@ -313,6 +313,8 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 </div>
 
 <script>
+	import { trackEvent } from '../scripts/analytics';
+
 	const markers = document.querySelectorAll<HTMLButtonElement>('.marker');
 	const carousels = document.querySelectorAll<HTMLElement>('[data-carousel]');
 	const closeButtons =
@@ -347,6 +349,30 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 
 	let clusters: MapCluster[] = [];
 	const markerClusters = new Map<HTMLButtonElement, MapCluster>();
+	const openedPlaces = new Set<string>();
+	const browsedGalleries = new Set<string>();
+
+	const placeNameFromCarousel = (carousel: HTMLElement) =>
+		carousel
+			.closest<HTMLElement>('.place')
+			?.querySelector<HTMLButtonElement>('.marker')?.dataset.placeName;
+
+	const trackGalleryBrowse = (carousel: HTMLElement) => {
+		if (carousel.querySelectorAll('.slide').length < 2) return;
+		const place = placeNameFromCarousel(carousel);
+		if (!place || browsedGalleries.has(place)) return;
+
+		browsedGalleries.add(place);
+		trackEvent('map-gallery-browse', { place });
+	};
+
+	const trackPlaceOpen = (marker: HTMLButtonElement) => {
+		const place = marker.dataset.placeName;
+		if (!place || openedPlaces.has(place)) return;
+
+		openedPlaces.add(place);
+		trackEvent('map-place-open', { place });
+	};
 
 	const normalizeSlideIndex = (requestedIndex: number, slideCount: number) =>
 		(requestedIndex + slideCount) % slideCount;
@@ -400,12 +426,14 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 			.querySelector<HTMLButtonElement>('[data-carousel-previous]')
 			?.addEventListener('click', () => {
 				showSlide(carousel, Number(carousel.dataset.index ?? 0) - 1);
+				trackGalleryBrowse(carousel);
 			});
 
 		carousel
 			.querySelector<HTMLButtonElement>('[data-carousel-next]')
 			?.addEventListener('click', () => {
 				showSlide(carousel, Number(carousel.dataset.index ?? 0) + 1);
+				trackGalleryBrowse(carousel);
 			});
 
 		carousel.addEventListener('keydown', (event) => {
@@ -413,6 +441,7 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 			event.preventDefault();
 			const direction = event.key === 'ArrowLeft' ? -1 : 1;
 			showSlide(carousel, Number(carousel.dataset.index ?? 0) + direction);
+			trackGalleryBrowse(carousel);
 		});
 	});
 
@@ -661,6 +690,7 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		}
 		if (placePicker)
 			placePicker.value = marker.getAttribute('aria-controls') ?? '';
+		trackPlaceOpen(marker);
 	};
 
 	closeButtons.forEach((button) => {

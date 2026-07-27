@@ -27,17 +27,94 @@ const { Content } = await render(home);
 			<h1 class="person-name" id="intro-heading">
 				James Zheng<span aria-hidden="true">.</span>
 			</h1>
-			<div class="intro-copy"><Content /></div>
+			<div class="intro-copy">
+				<Content />
+				<span class="analytics-sentinel" data-bio-end aria-hidden="true"></span>
+				<p>
+					<a
+						href="https://drive.google.com/file/d/1q3lU2DA2R_UTCr6s_ZAcfMhFMjj5oPWX/view?usp=sharing"
+						data-umami-event="resume-click">View resume</a
+					>
+				</p>
+			</div>
 		</section>
 
 		<nav class="contact-strip" aria-label="Contact links">
-			<a href="https://github.com/endernoke">GitHub</a>
-			<a href="https://www.linkedin.com/in/james-zheng-zi">LinkedIn</a>
-			<a href="https://x.com/endernoke">X</a>
-			<a href="mailto:zhengzijames@gmail.com">Email</a>
+			<a
+				href="https://github.com/endernoke"
+				data-umami-event="social-github-click">GitHub</a
+			>
+			<a
+				href="https://www.linkedin.com/in/james-zheng-zi"
+				data-umami-event="social-linkedin-click">LinkedIn</a
+			>
+			<a href="https://x.com/endernoke" data-umami-event="social-x-click">X</a>
+			<a
+				href="mailto:zhengzijames@gmail.com"
+				data-umami-event="contact-email-click">Email</a
+			>
 		</nav>
 	</div>
 </Layout>
+
+<script>
+	import { trackEvent } from '../scripts/analytics';
+
+	const bioEnd = document.querySelector<HTMLElement>('[data-bio-end]');
+	if (bioEnd) {
+		let bioEndVisible = false;
+		let completionTimer = 0;
+		let tracked = false;
+
+		const stopCompletionTimer = () => {
+			window.clearTimeout(completionTimer);
+			completionTimer = 0;
+		};
+
+		const startCompletionTimer = () => {
+			if (
+				tracked ||
+				!bioEndVisible ||
+				document.visibilityState !== 'visible' ||
+				completionTimer
+			)
+				return;
+
+			completionTimer = window.setTimeout(() => {
+				completionTimer = 0;
+				if (tracked || !bioEndVisible || document.visibilityState !== 'visible')
+					return;
+
+				tracked = true;
+				trackEvent('bio-end-reached');
+				observer.disconnect();
+			}, 2000);
+		};
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				bioEndVisible = entry.isIntersecting;
+				if (bioEndVisible) startCompletionTimer();
+				else stopCompletionTimer();
+			},
+			{ threshold: 1 },
+		);
+
+		observer.observe(bioEnd);
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') startCompletionTimer();
+			else stopCompletionTimer();
+		});
+		window.addEventListener(
+			'pagehide',
+			() => {
+				stopCompletionTimer();
+				observer.disconnect();
+			},
+			{ once: true },
+		);
+	}
+</script>
 
 <style>
 	.home-shell {
@@ -95,6 +172,13 @@ const { Content } = await render(home);
 
 	.intro-copy :global(strong) {
 		font-weight: 500;
+	}
+
+	.analytics-sentinel {
+		display: block;
+		width: 1px;
+		height: 1px;
+		pointer-events: none;
 	}
 
 	.contact-strip {
