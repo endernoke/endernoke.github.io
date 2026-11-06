@@ -4,13 +4,12 @@ import {
 	formatMonthDay,
 	formatMonthYear,
 	isoDate,
-	postType,
 	type Entry,
 } from '../lib/site';
 
 interface Props {
 	post: Entry;
-	/** "month": Nov 2026 (Home). "day": Nov 06 under a year heading, with a kind label. */
+	/** "month": Nov 2026 (Home). "day": Nov 06 under a year heading. */
 	variant?: 'month' | 'day';
 }
 
@@ -26,7 +25,6 @@ const { date, title, description } = post.data;
 		<a class="title" href={entryUrl(post)}>{title}</a>
 		<span class="desc">{description}</span>
 	</span>
-	{variant === 'day' && <span class="kind">{postType(post)}</span>}
 </li>
 
 <style>
@@ -69,13 +67,5 @@ const { date, title, description } = post.data;
 	.desc {
 		color: var(--muted);
 		font-size: 15px;
-	}
-
-	.kind {
-		flex: 0 0 auto;
-		padding-top: 6px;
-		color: var(--muted);
-		font-family: var(--mono);
-		font-size: 12px;
 	}
 </style>

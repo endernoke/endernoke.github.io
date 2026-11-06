@@ -4,8 +4,8 @@ import { SITE } from '../lib/site';
 const path = Astro.url.pathname;
 const section = (href: string) => path === href || path.startsWith(`${href}/`);
 const items = [
-	{ href: '/writing', label: 'writing' },
 	{ href: '/projects', label: 'projects' },
+	{ href: '/writing', label: 'writing' },
 	{ href: '/travels', label: 'travels' },
 ];
 // Exactly the section's own page gets aria-current="page"; deeper pages are

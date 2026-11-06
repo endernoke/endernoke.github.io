@@ -14,7 +14,6 @@ import {
 	getPosts,
 	getProjects,
 	isoDate,
-	postType,
 	readingMinutes,
 	SITE,
 	type Entry,
@@ -110,7 +109,6 @@ const facts = isPost
 						isPost ? (
 							<header class="post-head">
 								<p class="meta">
-									{postType(entry)} ·{' '}
 									<time datetime={isoDate(d.date)}>{formatLong(d.date)}</time> ·{' '}
 									{readingMinutes(entry.body)} min read
 								</p>

@@ -1,7 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Entry = CollectionEntry<'entries'>;
-export type PostType = 'essay' | 'story' | 'note';
 
 export const SITE = {
 	name: 'James Zheng',
@@ -16,32 +15,16 @@ export const SITE = {
 	x: 'https://x.com/endernoke',
 };
 
-/** Slugs taken by the /writing filter pages. */
-export const RESERVED_SLUGS = ['essays', 'stories', 'notes'];
-
-/** Filter pages under /writing, keyed by their slug. */
-export const POST_FILTERS = {
-	essays: 'essay',
-	stories: 'story',
-	notes: 'note',
-} as const satisfies Record<string, PostType>;
-
 // Drafts render in `astro dev` so layouts can be checked, never in a build.
 const visible = (entry: Entry) => import.meta.env.DEV || !entry.data.draft;
 const newestFirst = (a: Entry, b: Entry) =>
 	b.data.date.valueOf() - a.data.date.valueOf();
-
-const assertSlug = (entry: Entry) => {
-	if (RESERVED_SLUGS.includes(entry.id))
-		throw new Error(`Entry slug "${entry.id}" is reserved for /writing.`);
-};
 
 export const getPosts = async () => {
 	const posts = await getCollection(
 		'entries',
 		(e) => e.data.kind === 'post' && visible(e),
 	);
-	posts.forEach(assertSlug);
 	return posts.sort(newestFirst);
 };
 
@@ -50,14 +33,11 @@ export const getProjects = async () => {
 		'entries',
 		(e) => e.data.kind === 'project' && visible(e),
 	);
-	projects.forEach(assertSlug);
 	return projects.sort(newestFirst);
 };
 
 export const entryUrl = (entry: Entry) =>
 	`/${entry.data.kind === 'project' ? 'projects' : 'writing'}/${entry.id}`;
-
-export const postType = (entry: Entry): PostType => entry.data.type ?? 'essay';
 
 /** "stack · reach · stars", unless the entry sets its own facts line. */
 export const factsLine = (p: Entry) =>

@@ -1,5 +1,68 @@
 ---
-import WritingIndex from '../../components/WritingIndex.astro';
+import IndexLayout from '../../layouts/IndexLayout.astro';
+import PostRow from '../../components/PostRow.astro';
+import SectionLabel from '../../components/SectionLabel.astro';
+import { getPosts } from '../../lib/site';
+
+const posts = await getPosts();
+const years = [...new Set(posts.map((p) => p.data.date.getUTCFullYear()))];
 ---
 
-<WritingIndex />
+<IndexLayout
+	title="Writing"
+	description="James Zheng’s thoughts on technology and creation, as well as technical sharings."
+	seed="writing"
+	mainGap={48}
+>
+	<div class="page-head">
+		<h1 class="page-title">Writing</h1>
+		<p class="page-intro">
+			Thoughts on technology and creation.
+		</p>
+	</div>
+
+	{
+		years.map((year) => (
+			<section class="year" aria-labelledby={`y${year}`}>
+				<SectionLabel id={`y${year}`}>{year}</SectionLabel>
+				<ol class="plain-list">
+					{posts
+						.filter((p) => p.data.date.getUTCFullYear() === year)
+						.map((post) => (
+							<PostRow post={post} variant="day" />
+						))}
+				</ol>
+			</section>
+		))
+	}
+	{
+		posts.length === 0 && (
+			<p class="empty">
+				I hope to start writing here soon about reflections on technology, my
+				encounters and stories, as well as technical sharings. Stay tuned. For
+				the time being, you can browse my <a href="/projects">projects</a> or{' '}
+				<a href="/travels">travels</a> page.
+			</p>
+		)
+	}
+</IndexLayout>
+
+<style>
+	.year {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.year :global(.post-row) {
+		padding-block: 16px;
+	}
+
+	.year :global(.post-row .title) {
+		font-size: 22px;
+	}
+
+	.empty {
+		color: var(--ink-2);
+	}
+</style>

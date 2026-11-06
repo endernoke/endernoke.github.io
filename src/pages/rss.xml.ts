@@ -35,8 +35,7 @@ export const GET: APIRoute = async ({ site }) => {
 
 	return rss({
 		title: 'James Zheng — Writing',
-		description:
-			'Essays on technology, stories about people and places, and notes from building things.',
+		description: 'Thoughts on technology and creation.',
 		site: base,
 		items,
 		customData: '<language>en</language>',

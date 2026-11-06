@@ -1,6 +1,6 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { renderOgImage } from '../../lib/og';
-import { entryUrl, getPosts, getProjects, POST_FILTERS } from '../../lib/site';
+import { entryUrl, getPosts, getProjects } from '../../lib/site';
 
 type Props = { title: string; seed: string };
 
@@ -10,11 +10,6 @@ export const getStaticPaths = (async () => {
 		{ path: 'projects', title: 'Projects', seed: 'projects' },
 		{ path: 'writing', title: 'Writing', seed: 'writing' },
 		{ path: 'travels', title: 'Travels', seed: 'travels' },
-		...Object.keys(POST_FILTERS).map((slug) => ({
-			path: `writing/${slug}`,
-			title: 'Writing',
-			seed: 'writing',
-		})),
 	];
 	const entries = [...(await getPosts()), ...(await getProjects())];
 	for (const entry of entries)

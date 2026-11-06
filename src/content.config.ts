@@ -12,7 +12,6 @@ const entries = defineCollection({
 			description: z.string(), // dek / one-line description
 			date: z.coerce.date(),
 			kind: z.enum(['project', 'post']),
-			type: z.enum(['essay', 'story', 'note']).optional(), // posts only
 			featured: z.boolean().default(false), // shown on Home
 			minor: z.boolean().default(false), // projects: "Smaller things"
 			draft: z.boolean().default(false),
