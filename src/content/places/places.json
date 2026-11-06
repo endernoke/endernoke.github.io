@@ -1,0 +1,85 @@
+[
+  {
+    "id": "hong-kong",
+    "name": "Hong Kong",
+    "latitude": 22.3193,
+    "longitude": 114.1694
+  },
+  {
+    "id": "shenzhen",
+    "name": "Shenzhen",
+    "latitude": 22.5431,
+    "longitude": 114.0579
+  },
+  { "id": "xian", "name": "Xi'an", "latitude": 34.3416, "longitude": 108.9398 },
+  {
+    "id": "beijing",
+    "name": "Beijing",
+    "latitude": 39.9042,
+    "longitude": 116.4074,
+    "note": "Climbed the wall"
+  },
+  {
+    "id": "nanjing",
+    "name": "Nanjing",
+    "latitude": 32.0603,
+    "longitude": 118.7969
+  },
+  {
+    "id": "chongqing",
+    "name": "Chongqing",
+    "latitude": 29.563,
+    "longitude": 106.5516,
+    "note": "Almost had hotpot in a air shelter"
+  },
+  {
+    "id": "tengchong",
+    "name": "Tengchong",
+    "latitude": 25.0202,
+    "longitude": 98.4973,
+    "note": "A week of hiking and rotting in the mountains I guess"
+  },
+  {
+    "id": "singapore",
+    "name": "Singapore",
+    "latitude": 1.3521,
+    "longitude": 103.8198,
+    "note": "Spoke at Young Founders School 2025 Gala"
+  },
+  {
+    "id": "sydney",
+    "name": "Sydney",
+    "latitude": -33.8688,
+    "longitude": 151.2093,
+    "note": "Team HK, Australasian Economics Olympiad 2025"
+  },
+  { "id": "berlin", "name": "Berlin", "latitude": 52.52, "longitude": 13.405 },
+  {
+    "id": "salzburg",
+    "name": "Salzburg",
+    "latitude": 47.8095,
+    "longitude": 13.055,
+    "note": "Hiking in the early morning."
+  },
+  {
+    "id": "nyc",
+    "name": "New York",
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "note": "I visited the U.S. multiple times as a child"
+  },
+  {
+    "id": "cambridge-ma",
+    "name": "Cambridge",
+    "latitude": 42.3736,
+    "longitude": -71.1097,
+    "note": "Chilling inside the MIT campus"
+  },
+  {
+    "id": "san-francisco",
+    "name": "San Francisco",
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "note": "Visited 10 years ago. Will I be back?"
+  }
+]

@@ -1,0 +1,46 @@
+---
+title: Thirty minutes gone
+description: On writing a terminal client for Instagram, and what small tools can carry.
+date: 2026-11-06
+kind: post
+type: essay
+draft: true
+related: [instagram-cli]
+---
+
+{/* Sample text from the design canvas, kept as a draft so the post layout can be checked with `astro dev`. Replace before publishing. */}
+
+I opened Instagram to reply to one message. When I looked up, half an hour had passed, the message was still unanswered, and I could describe three reels I had no memory of choosing.
+
+Most of us know the feeling. What bothered me was less the lost time than the imbalance. I arrived with one small intention, and the app was built, very skilfully, to replace it with its own.
+
+## A smaller window
+
+So I tried an experiment. What if the only way to reach my messages was the terminal, a place with no autoplay and nothing to scroll except what I asked for? A few friends and I started building a client that did exactly that: chats, posts and stories from people you know, driven entirely from the keyboard.<sup><a href="#n1">1</a></sup>
+
+<Sidenote n="1">
+  The first version used Python. We later rewrote the interface in TypeScript
+  with Ink, which brings React to the command line.
+</Sidenote>
+
+```sh
+npm install -g @i7m/instagram-cli
+```
+
+Images were the hard part. Terminals were never meant to show pictures, and each one has its own idea of how to do it. We ended up writing a separate component that works out which protocol a terminal speaks and draws accordingly.<sup><a href="#n2">2</a></sup>
+
+<Sidenote n="2">
+  That component became [ink-picture](https://github.com/endernoke/ink-picture).
+  It has since passed two million downloads on its own.
+</Sidenote>
+
+## What I didn’t expect
+
+I expected a handful of terminal enthusiasts. Instead, people in more than seventy countries started using it, filing issues and sending pull requests, and telling us how they used it: to stay in touch from a work server, or just to talk to friends without losing an evening.<sup><a href="#n3">3</a></sup>
+
+<Sidenote n="3">
+  At last count, around fifty thousand users. [It’s
+  FOSS](https://itsfoss.com/instagram-cli/) also wrote a roast of it.
+</Sidenote>
+
+The lesson I keep returning to is that small tools can carry a point of view. A terminal client does not argue with the attention economy. It simply leaves out the parts that were never for you.

@@ -1,0 +1,27 @@
+---
+import IndexLayout from '../layouts/IndexLayout.astro';
+import WorldMap from '../components/WorldMap.astro';
+---
+
+<IndexLayout
+	title="Travels"
+	description="Places James Zheng has been, with a few photos and notes from each."
+	wide
+	gap={48}
+>
+	<div class="page-head column">
+		<h1 class="page-title">Travels</h1>
+		<p class="page-intro">
+			Places I’ve been, with a few photos and notes from each.
+		</p>
+	</div>
+	<WorldMap />
+</IndexLayout>
+
+<style>
+	.page-head {
+		width: 100%;
+		max-width: var(--column);
+		margin: 16px auto 40px;
+	}
+</style>

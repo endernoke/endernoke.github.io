@@ -1,0 +1,25 @@
+/* Light theme only for v1. A dark theme can redefine these tokens later. */
+:root {
+	--paper: #f7f7f4;
+	--ink: #1d1e20;
+	--ink-2: #3e4145;
+	--muted: #5e6165;
+	--line: #e2e2dd;
+	--link-underline: #b4b5b0;
+	--surface: #edede9;
+	--placeholder: #e4e4df;
+	--dot: #c4c5c0;
+	--dot-thumb: #b4b5b0;
+	--map-line: #9a9d98;
+	--map-grid: #dadbd6;
+
+	--sans: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+	--serif: 'Newsreader Variable', 'Newsreader', Georgia, serif;
+	--mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+	--column: 680px;
+	--sidenote: 220px;
+	--sidenote-gap: 48px;
+	--gutter-l: max(16px, env(safe-area-inset-left));
+	--gutter-r: max(16px, env(safe-area-inset-right));
+}

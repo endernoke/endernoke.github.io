@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import { getCollection, type CollectionEntry } from 'astro:content';
 import WorldOutline from './WorldOutline.astro';
 
 type PlacePhoto = {
@@ -13,15 +14,7 @@ type PhotoMetadata = {
 	note?: string;
 };
 
-type PlaceDefinition = {
-	id: string;
-	name: string;
-	coordinates: {
-		latitude: number;
-		longitude: number;
-	};
-	note?: string;
-};
+type PlaceDefinition = CollectionEntry<'places'>['data'];
 
 type Place = PlaceDefinition & {
 	photos: PlacePhoto[];
@@ -46,14 +39,8 @@ const descriptionFromFilename = (filename: string) =>
 		.replace(/^\d+[-_ ]*/, '')
 		.replace(/[-_]+/g, ' ');
 
-const positionFromCoordinates = ({
-	latitude,
-	longitude,
-}: PlaceDefinition['coordinates']) => {
-	if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-		throw new RangeError(`Invalid map coordinates: ${latitude}, ${longitude}`);
-	}
-
+// Equirectangular: the outline's viewBox is 1000×500 over 360°×180°.
+const positionFromCoordinates = ({ latitude, longitude }: PlaceDefinition) => {
 	const x = ((longitude + 180) / 360) * 100;
 	const y = ((90 - latitude) / 180) * 100;
 	return `--marker-x: ${x}%; --marker-y: ${y}%;`;
@@ -85,87 +72,10 @@ const loadPhotos = (place: PlaceDefinition): PlacePhoto[] => {
 		});
 };
 
-const placeDefinitions: PlaceDefinition[] = [
-	{
-		id: 'hong-kong',
-		name: 'Hong Kong',
-		coordinates: { latitude: 22.3193, longitude: 114.1694 },
-	},
-	{
-		id: 'shenzhen',
-		name: 'Shenzhen',
-		coordinates: { latitude: 22.5431, longitude: 114.0579 },
-	},
-	{
-		id: 'xian',
-		name: "Xi'an",
-		coordinates: { latitude: 34.3416, longitude: 108.9398 },
-	},
-	{
-		id: 'beijing',
-		name: 'Beijing',
-		coordinates: { latitude: 39.9042, longitude: 116.4074 },
-		note: 'Climbed the wall',
-	},
-	{
-		id: 'nanjing',
-		name: 'Nanjing',
-		coordinates: { latitude: 32.0603, longitude: 118.7969 },
-	},
-	{
-		id: 'chongqing',
-		name: 'Chongqing',
-		coordinates: { latitude: 29.563, longitude: 106.5516 },
-		note: 'Almost had hotpot in a air shelter',
-	},
-	{
-		id: 'tengchong',
-		name: 'Tengchong',
-		coordinates: { latitude: 25.0202, longitude: 98.4973 },
-		note: 'A week of hiking and rotting in the mountains I guess',
-	},
-	{
-		id: 'singapore',
-		name: 'Singapore',
-		coordinates: { latitude: 1.3521, longitude: 103.8198 },
-		note: 'Spoke at Young Founders School 2025 Gala',
-	},
-	{
-		id: 'sydney',
-		name: 'Sydney',
-		coordinates: { latitude: -33.8688, longitude: 151.2093 },
-		note: 'Team HK, Australasian Economics Olympiad 2025',
-	},
-	{
-		id: 'berlin',
-		name: 'Berlin',
-		coordinates: { latitude: 52.52, longitude: 13.405 },
-	},
-	{
-		id: 'salzburg',
-		name: 'Salzburg',
-		coordinates: { latitude: 47.8095, longitude: 13.055 },
-		note: 'Hiking in the early morning.',
-	},
-	{
-		id: 'nyc',
-		name: 'New York',
-		coordinates: { latitude: 40.7128, longitude: -74.006 },
-		note: 'I visited the U.S. multiple times as a child',
-	},
-	{
-		id: 'cambridge-ma',
-		name: 'Cambridge',
-		coordinates: { latitude: 42.3736, longitude: -71.1097 },
-		note: 'Chilling inside the MIT campus',
-	},
-	{
-		id: 'san-francisco',
-		name: 'San Francisco',
-		coordinates: { latitude: 37.7749, longitude: -122.4194 },
-		note: 'Visited 10 years ago. Will I be back?',
-	},
-];
+// Place definitions live in src/content/places/places.json.
+const placeDefinitions = (await getCollection('places')).map(
+	({ data }) => data,
+);
 
 const places: Place[] = placeDefinitions.map((place) => ({
 	...place,
@@ -201,9 +111,9 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 			places.map((place) => (
 				<div
 					class="place"
-					style={positionFromCoordinates(place.coordinates)}
-					data-latitude={place.coordinates.latitude}
-					data-longitude={place.coordinates.longitude}
+					style={positionFromCoordinates(place)}
+					data-latitude={place.latitude}
+					data-longitude={place.longitude}
 				>
 					<button
 						class="marker"
@@ -674,6 +584,23 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		});
 	};
 
+	// Shift an open card sideways so it stays inside the map frame (8px margin).
+	// The bottom-sheet layout on narrow screens ignores the shift.
+	const clampCard = (panel: HTMLElement) => {
+		if (!mapFrame) return;
+		panel.style.setProperty('--card-shift', '0px');
+		if (getComputedStyle(panel).position === 'fixed') return;
+		const frame = mapFrame.getBoundingClientRect();
+		const card = panel.getBoundingClientRect();
+		const margin = 8;
+		let shift = 0;
+		if (card.left < frame.left + margin)
+			shift = frame.left + margin - card.left;
+		else if (card.right > frame.right - margin)
+			shift = frame.right - margin - card.right;
+		panel.style.setProperty('--card-shift', `${Math.round(shift)}px`);
+	};
+
 	const openMarker = (marker: HTMLButtonElement, focusPanel = false) => {
 		const cluster = markerClusters.get(marker);
 		if (cluster) expandCluster(cluster);
@@ -686,6 +613,7 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		if (panel) {
 			showSlide(panel, Number(panel.dataset.index ?? 0));
 			panel.hidden = false;
+			clampCard(panel);
 			if (focusPanel) requestAnimationFrame(() => panel.focus());
 		}
 		if (placePicker)
@@ -771,45 +699,47 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 </script>
 
 <style>
-	.map-toolbar {
+	.map-component {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		margin-bottom: 0.8rem;
+		flex-direction: column;
+		gap: 12px;
 	}
 
-	.map-instructions {
-		margin: 0;
+	.map-toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px 16px;
+	}
+
+	.map-instructions,
+	.place-picker {
 		color: var(--muted);
-		font-size: 0.78rem;
+		font-size: 13px;
 	}
 
 	.place-picker {
 		display: flex;
 		flex: none;
 		align-items: center;
-		gap: 0.5rem;
-		color: var(--muted);
-		font-size: 0.72rem;
+		gap: 8px;
 	}
 
 	.place-picker select {
-		max-width: 12rem;
-		padding: 0.32rem 0.5rem;
-		border: 1px solid var(--line);
+		min-height: 36px;
+		max-width: 200px;
+		padding: 4px 8px;
+		border: 1px solid #cfd0cb;
 		border-radius: 0;
 		color: var(--ink);
 		background: var(--paper);
 		font: inherit;
-		font-size: 0.75rem;
 	}
 
 	.map-caption {
-		max-width: 38rem;
-		margin: 0.75rem 0 0;
 		color: var(--muted);
-		font-size: 0.72rem;
+		font-size: 12px;
 		line-height: 1.55;
 	}
 
@@ -821,8 +751,12 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		position: relative;
 		width: 100%;
 		border-block: 1px solid var(--line);
-		color: #8b989d;
-		background-image: radial-gradient(circle, #d5deda 1px, transparent 1px);
+		color: var(--map-line);
+		background-image: radial-gradient(
+			circle,
+			var(--map-grid) 1px,
+			transparent 1.2px
+		);
 		background-size: 18px 18px;
 	}
 
@@ -841,7 +775,7 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	.cluster-lines :global(line) {
-		stroke: var(--accent);
+		stroke: var(--ink);
 		stroke-dasharray: 2 3;
 		stroke-width: 1;
 		vector-effect: non-scaling-stroke;
@@ -854,17 +788,16 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	.map-component :global(.cluster-button) {
 		position: absolute;
 		display: grid;
-		width: 1.55rem;
-		height: 1.55rem;
+		width: 26px;
+		height: 26px;
 		padding: 0;
-		border: 1px solid var(--accent);
+		border: 1px solid var(--ink);
 		border-radius: 50%;
 		place-items: center;
-		color: var(--accent);
+		color: var(--ink);
 		background: var(--paper);
-		box-shadow: 0 2px 7px rgb(34 34 34 / 12%);
 		font: inherit;
-		font-size: 0.68rem;
+		font-size: 11px;
 		font-weight: 600;
 		cursor: pointer;
 		pointer-events: auto;
@@ -872,42 +805,30 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		transition:
 			color 140ms ease,
 			background-color 140ms ease,
-			opacity 140ms ease,
-			transform 140ms ease;
+			opacity 140ms ease;
 	}
 
 	.map-component
-		:global(.cluster-button:not(:disabled):not([aria-expanded='true']):hover),
-	.map-component
-		:global(
-			.cluster-button:not(:disabled):not([aria-expanded='true']):focus-visible
-		) {
+		:global(.cluster-button:not(:disabled):not([aria-expanded='true']):hover) {
 		color: var(--paper);
-		background: var(--accent);
-		transform: translate(-50%, -50%) scale(1.08);
+		background: var(--ink);
 	}
 
 	.map-component :global(.cluster-button[aria-expanded='true']) {
-		color: var(--accent);
-		background: color-mix(in srgb, var(--paper) 38%, transparent);
-		box-shadow: none;
-		opacity: 0.52;
-		backdrop-filter: blur(1px);
-		-webkit-backdrop-filter: blur(1px);
+		background: color-mix(in srgb, var(--paper) 70%, transparent);
+		opacity: 0.6;
 	}
 
 	.map-component :global(.cluster-button[aria-expanded='true']:hover),
 	.map-component :global(.cluster-button[aria-expanded='true']:focus-visible) {
-		background: color-mix(in srgb, var(--paper) 82%, transparent);
+		background: var(--paper);
 		opacity: 1;
-		transform: translate(-50%, -50%) scale(1.04);
 	}
 
 	.map-component :global(.cluster-button:disabled) {
 		opacity: 0.18;
 		cursor: default;
 		pointer-events: none;
-		transform: translate(-50%, -50%);
 	}
 
 	.place {
@@ -938,9 +859,10 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	.marker {
+		position: relative;
 		display: grid;
-		width: 1rem;
-		height: 1rem;
+		width: 20px;
+		height: 20px;
 		padding: 0;
 		border: 0;
 		border-radius: 50%;
@@ -957,17 +879,17 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		pointer-events: none;
 	}
 
+	/* Name tooltip on hover and keyboard focus. */
 	.marker::after {
 		position: absolute;
-		bottom: calc(100% + 0.28rem);
+		bottom: calc(100% + 5px);
 		left: 50%;
-		padding: 0.12rem 0.35rem;
+		padding: 2px 6px;
 		border: 1px solid var(--line);
 		color: var(--ink);
 		background: var(--paper);
-		box-shadow: 0 3px 10px rgb(34 34 34 / 8%);
 		content: attr(data-place-name);
-		font-size: 0.66rem;
+		font-size: 11px;
 		font-weight: 500;
 		line-height: 1.35;
 		opacity: 0;
@@ -986,50 +908,48 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		opacity: 0;
 	}
 
+	/* Ink dot, 2px paper ring, 1px ink outer ring (2px when open). */
 	.marker span {
 		display: block;
-		width: 0.62rem;
-		height: 0.62rem;
+		width: 10px;
+		height: 10px;
 		border: 2px solid var(--paper);
 		border-radius: 50%;
-		background: var(--accent);
-		box-shadow: 0 0 0 1px var(--accent);
+		background: var(--ink);
+		box-shadow: 0 0 0 1px var(--ink);
+		box-sizing: content-box;
 	}
 
 	.marker:not(:disabled):hover span,
 	.marker[aria-expanded='true'] span {
-		background: var(--ink);
 		box-shadow: 0 0 0 2px var(--ink);
 	}
 
 	.place-card {
+		--card-shift: 0px;
+
 		position: absolute;
-		bottom: 1.65rem;
-		left: 50%;
+		bottom: 22px;
+		left: 0;
 		z-index: 5;
-		width: 19rem;
-		border: 1px solid #bdc8cc;
+		width: 304px;
+		border: 1px solid #c9cbc6;
 		color: var(--ink);
 		background: var(--paper);
-		box-shadow: 0 10px 25px rgb(34 34 34 / 9%);
-		transform: translateX(-50%);
+		box-shadow: 0 10px 25px rgb(29 30 32 / 9%);
+		transform: translateX(calc(-50% + var(--card-shift)));
 	}
 
 	.place-card[hidden] {
 		display: none;
 	}
 
-	.place-card:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
-	}
-
 	.place-card-header {
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
-		gap: 1rem;
-		padding: 0.72rem 0.9rem;
+		gap: 16px;
+		padding: 10px 14px;
 		border-bottom: 1px solid var(--line);
 	}
 
@@ -1037,12 +957,11 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		display: flex;
 		flex: none;
 		align-items: center;
-		gap: 0.7rem;
+		gap: 10px;
 	}
 
 	h3 {
-		margin: 0;
-		font-size: 0.92rem;
+		font-size: 15px;
 		font-weight: 600;
 		line-height: 1.35;
 	}
@@ -1050,15 +969,15 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	.slide-count {
 		flex: none;
 		color: var(--muted);
-		font-size: 0.68rem;
+		font-family: var(--mono);
+		font-size: 11px;
 		font-variant-numeric: tabular-nums;
-		letter-spacing: 0.06em;
 	}
 
 	.place-card-close {
 		display: grid;
-		width: 1.7rem;
-		height: 1.7rem;
+		width: 28px;
+		height: 28px;
 		padding: 0;
 		border: 0;
 		place-items: center;
@@ -1067,14 +986,13 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		cursor: pointer;
 	}
 
-	.place-card-close:hover,
-	.place-card-close:focus-visible {
-		color: var(--accent);
+	.place-card-close:hover {
+		color: var(--ink);
 	}
 
 	.place-card-close svg {
-		width: 0.8rem;
-		height: 0.8rem;
+		width: 12px;
+		height: 12px;
 		fill: none;
 		stroke: currentColor;
 		stroke-linecap: round;
@@ -1082,13 +1000,9 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	.slides {
-		--photo-height: 10rem;
+		--photo-height: 168px;
 
 		position: relative;
-	}
-
-	.slide {
-		margin: 0;
 	}
 
 	.slide[hidden] {
@@ -1096,33 +1010,28 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	.place-card img {
-		display: block;
 		width: 100%;
 		height: var(--photo-height);
 		object-fit: cover;
 	}
 
-	.slide figcaption {
-		padding: 0.8rem 0.9rem 0.9rem;
-		border-top: 1px solid var(--line);
+	.slide figcaption,
+	.place-note {
+		padding: 10px 14px 12px;
 		color: var(--muted);
-		font-size: 0.75rem;
+		font-size: 13px;
 		line-height: 1.45;
 	}
 
-	.place-note {
-		margin: 0;
-		padding: 0.8rem 0.9rem 0.9rem;
-		color: var(--muted);
-		font-size: 0.75rem;
-		line-height: 1.45;
+	.slide figcaption {
+		border-top: 1px solid var(--line);
 	}
 
 	.carousel-controls {
 		position: absolute;
 		top: calc(var(--photo-height) / 2);
-		right: 0.55rem;
-		left: 0.55rem;
+		right: 8px;
+		left: 8px;
 		display: flex;
 		justify-content: space-between;
 		pointer-events: none;
@@ -1131,43 +1040,31 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 
 	.carousel-button {
 		display: grid;
-		width: 2.15rem;
-		height: 2.15rem;
+		width: 34px;
+		height: 34px;
 		padding: 0;
-		border: 1px solid rgb(34 34 34 / 10%);
+		border: 1px solid rgb(29 30 32 / 14%);
 		border-radius: 50%;
 		place-items: center;
 		color: var(--ink);
-		background: rgb(250 250 248 / 28%);
-		box-shadow: 0 2px 9px rgb(34 34 34 / 8%);
-		backdrop-filter: blur(6px);
-		font: inherit;
+		background: rgb(247 247 244 / 72%);
 		cursor: pointer;
 		pointer-events: auto;
-		transition:
-			background-color 140ms ease,
-			border-color 140ms ease,
-			box-shadow 140ms ease,
-			color 140ms ease;
-		-webkit-backdrop-filter: blur(6px);
+		transition: background-color 140ms ease;
+	}
+
+	.carousel-button:hover {
+		background: rgb(247 247 244 / 94%);
 	}
 
 	.carousel-button svg {
-		width: 0.9rem;
-		height: 0.9rem;
+		width: 14px;
+		height: 14px;
 		fill: none;
 		stroke: currentColor;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		stroke-width: 1.75;
-	}
-
-	.carousel-button:hover,
-	.carousel-button:focus-visible {
-		border-color: rgb(34 34 34 / 18%);
-		color: var(--accent);
-		background: rgb(250 250 248 / 90%);
-		box-shadow: 0 2px 9px rgb(34 34 34 / 14%);
 	}
 
 	@media (pointer: coarse) {
@@ -1180,12 +1077,10 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 			width: 2rem;
 			height: 2rem;
 		}
-	}
 
-	@media (prefers-reduced-motion: reduce) {
-		.place,
-		.map-component :global(.cluster-button) {
-			transition: none;
+		.carousel-button {
+			width: 2.75rem;
+			height: 2.75rem;
 		}
 	}
 
@@ -1193,7 +1088,6 @@ const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
 		.map-toolbar {
 			align-items: stretch;
 			flex-direction: column;
-			gap: 0.55rem;
 		}
 
 		.place-picker select {

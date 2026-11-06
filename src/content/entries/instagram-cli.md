@@ -1,10 +1,28 @@
 ---
 title: Instagram CLI
-description: Instagram's (unofficial) CLI and TUI client - The ultimate weapon against brainrot
+description: 'Instagram from the terminal: messages, posts and stories from the people you know, without the reels. Started as a weekend experiment with friends.'
+blurb: A way to message friends on Instagram from the terminal without getting pulled into reels. Built with friends; it has since found around fifty thousand users.
+lede: Instagram from the terminal, without the reels.
 date: 2025-02-20
 kind: project
-tags: [TypeScript, React, Terminal]
 featured: true
+tags: [TypeScript, React, Terminal]
+stack: [TypeScript, React + Ink, MQTT, Python]
+with: friends at supreme-gg-gg
+reach: ~50,000 people in 70+ countries
+repo: supreme-gg-gg/instagram-cli
+stars: 2.2k
+facts: TypeScript · Python · ~50k users in 70+ countries · 2.2k stars
+links:
+  - label: npm
+    href: https://www.npmjs.com/package/@i7m/instagram-cli
+  - label: PyPI
+    href: https://pypi.org/project/instagram-cli/
+elsewhere:
+  - label: It’s FOSS
+    href: https://itsfoss.com/instagram-cli/
+  - label: Jet’s write-up
+    href: https://jetchiang.com/blog/instagram-cli/
 image: ../../assets/projects/i7m.png
 imageAlt: Terminal window displaying the colourful Instagram CLI logo and its help text.
 ---

@@ -1,26 +1,73 @@
 ---
-import { getCollection } from 'astro:content';
-import EntryList from '../../components/EntryList.astro';
-import Layout from '../../layouts/Layout.astro';
+import IndexLayout from '../../layouts/IndexLayout.astro';
+import ProjectRow from '../../components/ProjectRow.astro';
+import SectionLabel from '../../components/SectionLabel.astro';
+import { entryUrl, getProjects, SITE } from '../../lib/site';
 
-const projects = (
-	await getCollection(
-		'entries',
-		({ data }) => data.kind === 'project' && !data.draft,
-	)
-).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const projects = await getProjects();
+const main = projects.filter((p) => !p.data.minor);
+const minor = projects.filter((p) => p.data.minor);
 ---
 
-<Layout
-	title="Projects - James Zheng"
-	description="Select software projects I've made. I try to make useful things."
+<IndexLayout
+	title="Projects"
+	description="Things James Zheng has built, mostly in the open and mostly with friends."
+	seed="projects"
 >
-	<div class="index-shell">
-		<header class="page-heading">
-			<h1>Projects</h1>
-			<p>I try to make useful things.</p>
-		</header>
-
-		<EntryList entries={projects} layout="projects" />
+	<div class="page-head">
+		<h1 class="page-title">Projects</h1>
+		<p class="page-intro">
+			Things I’ve built, mostly in the open and mostly with friends. The code
+			for nearly all of them is on <a href={SITE.github}>GitHub</a>.
+		</p>
 	</div>
-</Layout>
+
+	<ul class="plain-list">
+		{main.map((project) => <ProjectRow project={project} />)}
+	</ul>
+
+	{
+		minor.length > 0 && (
+			<section class="section" aria-labelledby="h-small">
+				<SectionLabel id="h-small">Smaller things</SectionLabel>
+				<ul class="plain-list">
+					{minor.map((p) => (
+						<li class="small-row">
+							<a class="name" href={entryUrl(p)}>
+								{p.data.title}
+							</a>
+							<span class="desc">{p.data.description}</span>
+						</li>
+					))}
+				</ul>
+			</section>
+		)
+	}
+</IndexLayout>
+
+<style>
+	.small-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2px 24px;
+		padding: 12px 0;
+		border-top: 1px solid var(--line);
+	}
+
+	.name {
+		flex: 0 0 180px;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.name:hover {
+		text-decoration: underline;
+		text-decoration-color: var(--ink);
+	}
+
+	.desc {
+		flex: 1 1 300px;
+		min-width: 0;
+		color: var(--ink-2);
+	}
+</style>

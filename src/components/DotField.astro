@@ -1,0 +1,114 @@
+---
+import { altSeed, hash } from '../lib/dots';
+
+interface Props {
+	seed: string;
+	/** Draw the bottom-right field as well (index pages). */
+	corners?: 'tl' | 'both';
+	tl?: { w: number; h: number };
+	br?: { w: number; h: number };
+}
+
+const {
+	seed,
+	corners = 'both',
+	tl = { w: 300, h: 600 },
+	br = { w: 300, h: 480 },
+} = Astro.props;
+---
+
+<canvas
+	class="dot-field tl"
+	aria-hidden="true"
+	data-seed={hash(seed)}
+	data-corner="tl"
+	style={`width:${tl.w}px;height:${tl.h}px`}></canvas>
+{
+	corners === 'both' && (
+		<canvas
+			class="dot-field br"
+			aria-hidden="true"
+			data-seed={altSeed(seed)}
+			data-corner="br"
+			style={`width:${br.w}px;height:${br.h}px`}
+		/>
+	)
+}
+
+<script>
+	import { CORNER, dots } from '../lib/dots';
+
+	const draw = () => {
+		const ratio = window.devicePixelRatio || 1;
+		document
+			.querySelectorAll<HTMLCanvasElement>('canvas.dot-field')
+			.forEach((el) => {
+				if (getComputedStyle(el).display === 'none') return;
+				const w = el.clientWidth;
+				const h = el.clientHeight;
+				el.width = Math.round(w * ratio);
+				el.height = Math.round(h * ratio);
+				const ctx = el.getContext('2d');
+				if (!ctx) return;
+				ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+				ctx.fillStyle =
+					getComputedStyle(el).getPropertyValue('--dot').trim() || '#c4c5c0';
+				const br = el.dataset.corner === 'br';
+				const opts = { ...CORNER, flipX: br, flipY: br };
+				ctx.beginPath();
+				dots(w, h, Number(el.dataset.seed), opts, (x, y) => {
+					ctx.moveTo(x + CORNER.r, y);
+					ctx.arc(x, y, CORNER.r, 0, Math.PI * 2);
+				});
+				ctx.fill();
+			});
+	};
+
+	// Draw once, then again only when the pixel ratio changes (zoom, new screen)
+	// or when a field first becomes visible on a wider viewport.
+	const watchRatio = () => {
+		matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener(
+			'change',
+			() => {
+				draw();
+				watchRatio();
+			},
+			{ once: true },
+		);
+	};
+	draw();
+	watchRatio();
+	matchMedia('(min-width: 1200px)').addEventListener('change', (e) => {
+		if (e.matches) draw();
+	});
+</script>
+
+<style>
+	.dot-field {
+		position: absolute;
+		z-index: 0;
+		pointer-events: none;
+	}
+
+	.tl {
+		top: 0;
+		left: 0;
+	}
+
+	.br {
+		right: 0;
+		bottom: 0;
+	}
+
+	@media (max-width: 1199.98px) {
+		.dot-field {
+			display: none;
+		}
+	}
+
+	@media print {
+		.dot-field {
+			display: none;
+		}
+	}
+</style>

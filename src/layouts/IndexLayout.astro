@@ -1,0 +1,55 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import DotField from '../components/DotField.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+	/** Seed for the corner dot fields; omit for no fields. */
+	seed?: string;
+	wide?: boolean;
+	jsonLd?: Record<string, unknown>;
+	gap?: number;
+	mainGap?: number;
+}
+
+const {
+	title,
+	description,
+	seed,
+	wide = false,
+	jsonLd,
+	gap,
+	mainGap,
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+	<div class="page">
+		{seed && <DotField seed={seed} />}
+		<div
+			class:list={['wrap', { 'wrap--wide': wide }]}
+			style={gap ? `gap:${gap}px` : undefined}
+		>
+			<SiteHeader />
+			<main
+				id="main-content"
+				class:list={['index-main', { column: !wide }]}
+				style={mainGap ? `gap:${mainGap}px` : undefined}
+			>
+				<slot />
+			</main>
+			<SiteFooter />
+		</div>
+	</div>
+</BaseLayout>
+
+<style>
+	.index-main {
+		display: flex;
+		flex-direction: column;
+		gap: 56px;
+	}
+</style>

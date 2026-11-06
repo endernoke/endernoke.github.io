@@ -1,0 +1,19 @@
+---
+import EntryLayout from '../../layouts/EntryLayout.astro';
+import { getPosts, type Entry } from '../../lib/site';
+
+export async function getStaticPaths() {
+	const posts = await getPosts();
+	return posts.map((entry) => ({
+		params: { slug: entry.id },
+		props: { entry },
+	}));
+}
+
+interface Props {
+	entry: Entry;
+}
+const { entry } = Astro.props;
+---
+
+<EntryLayout entry={entry} />

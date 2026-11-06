@@ -1,10 +1,15 @@
 ---
 title: Soular
-description: A social media mobile app for NGOs and youth volunteers to complete the conception, coordination and publicity of initiatives.
+description: A social app where young volunteers and NGOs plan, run and share environmental initiatives together.
+blurb: A social app for young volunteers and NGOs organising environmental initiatives.
+lede: A social network for young people who want to do something for the environment.
 date: 2025-05-10
 kind: project
+featured: true
 tags: [react-native, supabase]
-featured: false
+stack: [React Native, Expo, Supabase, TypeScript]
+repo: endernoke/soular
+facts: React Native · Supabase · completed
 image: ../../assets/projects/soular.png
 imageAlt: Promotional poster for Soular. Five overlapping smartphone mockups showcase features including climate events, community actions, learning resources, and a carbon footprint calculator. The title "Soular – The Climate Game Changer" appears prominently above, with a QR code linking to the app and St. Paul's College branding in the top-right corner.
 ---

@@ -1,90 +1,137 @@
 ---
 import { getEntry, render } from 'astro:content';
 import { Image } from 'astro:assets';
-import PortraitImage from '../assets/portrait.jpg';
-import Layout from '../layouts/Layout.astro';
+import IndexLayout from '../layouts/IndexLayout.astro';
+import PostRow from '../components/PostRow.astro';
+import ProjectRow from '../components/ProjectRow.astro';
+import SectionLabel from '../components/SectionLabel.astro';
+import { getPosts, getProjects, SITE } from '../lib/site';
 
 const home = await getEntry('pages', 'home');
 if (!home) throw new Error('Homepage content was not found.');
 const { Content } = await render(home);
+const { portrait, portraitAlt, portraitCaption } = home.data;
+
+const posts = (await getPosts()).slice(0, 3);
+const featured = (await getProjects())
+	.filter((p) => p.data.featured)
+	.slice(0, 4);
+
+const jsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'Person',
+	name: SITE.name,
+	url: SITE.url,
+	email: `mailto:${SITE.email}`,
+	sameAs: [SITE.github, SITE.linkedin, SITE.x],
+	affiliation: {
+		'@type': 'CollegeOrUniversity',
+		name: 'University of Hong Kong',
+		url: 'https://www.hku.hk',
+	},
+};
 ---
 
-<Layout title={home.data.title} description={home.data.description}>
-	<div class="home-shell">
-		<section class="intro" aria-labelledby="intro-heading">
-			<div class="portrait-wrap">
-				<Image
-					class="portrait"
-					src={PortraitImage}
-					alt="Headshot of James inside his high school campus"
-					width="240"
-					height="240"
-					fetchpriority="high"
-				/>
-			</div>
+<IndexLayout
+	description={home.data.description}
+	seed="home"
+	jsonLd={jsonLd}
+	gap={72}
+	mainGap={72}
+>
+	<section class="intro" aria-labelledby="intro-heading">
+		{
+			portrait && (
+				<figure class="portrait">
+					<Image
+						src={portrait}
+						alt={portraitAlt ?? ''}
+						width={168}
+						height={210}
+						widths={[112, 168, 224, 336, 504]}
+						sizes="(max-width: 639px) 112px, 168px"
+						fetchpriority="high"
+						loading="eager"
+					/>
+					{portraitCaption && <figcaption>{portraitCaption}</figcaption>}
+				</figure>
+			)
+		}
+		<h1 class="page-title" id="intro-heading">Hello, I’m James.</h1>
+		<div class="intro-copy">
+			<Content />
+			<p class="contact">
+				Say hello on <a
+					href={SITE.github}
+					data-umami-event="social-github-click">GitHub</a
+				>, <a href={SITE.linkedin} data-umami-event="social-linkedin-click"
+					>LinkedIn</a
+				> or <a href={SITE.x} data-umami-event="social-x-click">X</a>, or write
+				to <a
+					href={`mailto:${SITE.email}`}
+					data-umami-event="contact-email-click">{SITE.email}</a
+				>.
+			</p>
+		</div>
+		<span class="sentinel" data-bio-end aria-hidden="true"></span>
+	</section>
 
-			<p class="eyebrow">Hello, I’m</p>
-			<h1 class="person-name" id="intro-heading">
-				James Zheng<span aria-hidden="true">.</span>
-			</h1>
-			<div class="intro-copy">
-				<Content />
-				<span class="analytics-sentinel" data-bio-end aria-hidden="true"></span>
-				<p>
-					<a
-						href="https://drive.google.com/file/d/1q3lU2DA2R_UTCr6s_ZAcfMhFMjj5oPWX/view?usp=sharing"
-						data-umami-event="resume-click">View resume</a
-					>
-				</p>
-			</div>
-		</section>
+	{
+		posts.length > 0 && (
+			<section class="section" aria-labelledby="h-writing">
+				<SectionLabel id="h-writing">Writing</SectionLabel>
+				<ol class="plain-list rows">
+					{posts.map((post) => (
+						<PostRow post={post} />
+					))}
+				</ol>
+				<a class="more-link" href="/writing">
+					All writing
+				</a>
+			</section>
+		)
+	}
 
-		<nav class="contact-strip" aria-label="Contact links">
-			<a
-				href="https://github.com/endernoke"
-				data-umami-event="social-github-click">GitHub</a
-			>
-			<a
-				href="https://www.linkedin.com/in/james-zheng-zi"
-				data-umami-event="social-linkedin-click">LinkedIn</a
-			>
-			<a href="https://x.com/endernoke" data-umami-event="social-x-click">X</a>
-			<a
-				href="mailto:zhengzijames@gmail.com"
-				data-umami-event="contact-email-click">Email</a
-			>
-		</nav>
-	</div>
-</Layout>
+	<section class="section" aria-labelledby="h-made">
+		<SectionLabel id="h-made">Things I’ve made</SectionLabel>
+		<ul class="plain-list made">
+			{
+				featured.map((project) => (
+					<ProjectRow project={project} variant="home" />
+				))
+			}
+		</ul>
+		<a class="more-link" href="/projects">All projects</a>
+	</section>
+</IndexLayout>
 
 <script>
 	import { trackEvent } from '../scripts/analytics';
 
+	// bio-end-reached: the end of the intro stayed in view for two seconds.
 	const bioEnd = document.querySelector<HTMLElement>('[data-bio-end]');
 	if (bioEnd) {
-		let bioEndVisible = false;
-		let completionTimer = 0;
+		let visible = false;
+		let timer = 0;
 		let tracked = false;
 
-		const stopCompletionTimer = () => {
-			window.clearTimeout(completionTimer);
-			completionTimer = 0;
+		const stop = () => {
+			window.clearTimeout(timer);
+			timer = 0;
 		};
 
-		const startCompletionTimer = () => {
+		const start = () => {
 			if (
 				tracked ||
-				!bioEndVisible ||
+				!visible ||
 				document.visibilityState !== 'visible' ||
-				completionTimer
+				timer
 			)
 				return;
-
-			completionTimer = window.setTimeout(() => {
-				completionTimer = 0;
-				if (tracked || !bioEndVisible || document.visibilityState !== 'visible')
+			timer = window.setTimeout(() => {
+				timer = 0;
+				if (tracked || !visible || document.visibilityState !== 'visible')
 					return;
-
 				tracked = true;
 				trackEvent('bio-end-reached');
 				observer.disconnect();
@@ -93,22 +140,22 @@ const { Content } = await render(home);
 
 		const observer = new IntersectionObserver(
 			([entry]) => {
-				bioEndVisible = entry.isIntersecting;
-				if (bioEndVisible) startCompletionTimer();
-				else stopCompletionTimer();
+				visible = entry.isIntersecting;
+				if (visible) start();
+				else stop();
 			},
 			{ threshold: 1 },
 		);
 
 		observer.observe(bioEnd);
 		document.addEventListener('visibilitychange', () => {
-			if (document.visibilityState === 'visible') startCompletionTimer();
-			else stopCompletionTimer();
+			if (document.visibilityState === 'visible') start();
+			else stop();
 		});
 		window.addEventListener(
 			'pagehide',
 			() => {
-				stopCompletionTimer();
+				stop();
 				observer.disconnect();
 			},
 			{ once: true },
@@ -117,104 +164,79 @@ const { Content } = await render(home);
 </script>
 
 <style>
-	.home-shell {
-		width: min(100% - 2.5rem, 42rem);
-		margin-inline: auto;
-		padding-block: clamp(2.5rem, 6vh, 4rem) clamp(2rem, 4vh, 3rem);
-	}
-
+	/* A short intro still fills the first screen, so the Writing and Projects
+	   sections never peek in above the fold. 200px = 56px top padding + 72px
+	   header gap + 72px section gap; the header's own height is left as slack
+	   so a header that wraps on narrow screens can't pull them back up. lvh
+	   (toolbars hidden) keeps them below the fold when mobile toolbars retract. */
 	.intro {
-		position: relative;
 		display: flow-root;
-	}
-
-	.portrait-wrap {
-		float: right;
-		width: clamp(8rem, 25vw, 10.5rem);
-		margin: 0.1rem 0 2rem 2.5rem;
+		min-height: calc(100vh - 200px);
+		min-height: calc(100lvh - 200px);
 	}
 
 	.portrait {
-		display: block;
-		width: 100%;
-		height: auto;
-		border-radius: 50%;
+		float: right;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		width: 168px;
+		max-width: 38%;
+		margin: 6px 0 16px 36px;
 	}
 
-	.portrait-note {
-		display: block;
-		margin-top: 0.65rem;
+	.portrait :global(img) {
+		width: 100%;
+		aspect-ratio: 4 / 5;
+		border-radius: 4px;
+		background: var(--placeholder);
+		object-fit: cover;
+	}
+
+	.portrait figcaption {
 		color: var(--muted);
-		font-size: 0.62rem;
-		letter-spacing: 0.13em;
-		text-align: center;
+		font-family: var(--mono);
+		font-size: 12px;
+		line-height: 1.4;
 	}
 
 	h1 {
-		margin: 0 0 1.8rem;
-		font-weight: 500;
-		letter-spacing: -0.065em;
-		line-height: 0.93;
-	}
-
-	h1 span {
-		color: var(--accent);
-	}
-
-	.intro-copy {
-		font-size: clamp(1.05rem, 2.5vw, 1.17rem);
-		line-height: 1.72;
+		margin-bottom: 24px;
 	}
 
 	.intro-copy :global(p) {
-		margin: 0 0 1.05rem;
+		margin-bottom: 18px;
 	}
 
-	.intro-copy :global(strong) {
-		font-weight: 500;
+	.intro-copy .contact {
+		margin-bottom: 0;
+		color: var(--ink-2);
 	}
 
-	.analytics-sentinel {
+	.contact a[href^='mailto:'] {
+		user-select: text;
+	}
+
+	.sentinel {
 		display: block;
 		width: 1px;
 		height: 1px;
-		pointer-events: none;
 	}
 
-	.contact-strip {
+	.rows {
+		border-bottom: 1px solid var(--line);
+	}
+
+	.made {
 		display: flex;
-		width: 100%;
-		flex-wrap: wrap;
-		justify-content: flex-start;
-		gap: clamp(0.75rem, 2vw, 1.15rem);
-		margin: clamp(1.5rem, 4vh, 2.25rem) 0 0;
-		font-size: 0.82rem;
-		text-align: left;
+		flex-direction: column;
+		gap: 22px;
 	}
 
-	.contact-strip a {
-		color: var(--ink);
-		text-decoration: none;
-	}
-
-	.contact-strip a:hover {
-		color: var(--accent);
-		text-decoration: underline;
-	}
-
-	@media (max-width: 44rem) {
-		.home-shell {
-			width: min(100% - 2rem, 42rem);
-		}
-
-		.portrait-wrap {
-			float: none;
-			width: 7.5rem;
-			margin: 0 0 2.8rem;
-		}
-
-		.portrait-note {
-			text-align: left;
+	@media (max-width: 639.98px) {
+		.portrait {
+			width: 112px;
+			margin-left: 20px;
 		}
 	}
 </style>

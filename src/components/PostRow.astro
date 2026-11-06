@@ -1,0 +1,81 @@
+---
+import {
+	entryUrl,
+	formatMonthDay,
+	formatMonthYear,
+	isoDate,
+	postType,
+	type Entry,
+} from '../lib/site';
+
+interface Props {
+	post: Entry;
+	/** "month": Nov 2026 (Home). "day": Nov 06 under a year heading, with a kind label. */
+	variant?: 'month' | 'day';
+}
+
+const { post, variant = 'month' } = Astro.props;
+const { date, title, description } = post.data;
+---
+
+<li class="post-row">
+	<time class="date" datetime={isoDate(date)}
+		>{variant === 'day' ? formatMonthDay(date) : formatMonthYear(date)}</time
+	>
+	<span class="text">
+		<a class="title" href={entryUrl(post)}>{title}</a>
+		<span class="desc">{description}</span>
+	</span>
+	{variant === 'day' && <span class="kind">{postType(post)}</span>}
+</li>
+
+<style>
+	.post-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2px 24px;
+		padding: 14px 0;
+		border-top: 1px solid var(--line);
+	}
+
+	.date {
+		flex: 0 0 88px;
+		padding-top: 4px;
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 13px;
+	}
+
+	.text {
+		display: flex;
+		flex: 1 1 300px;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.title {
+		font-family: var(--serif);
+		font-size: 21px;
+		line-height: 1.3;
+		text-decoration: none;
+	}
+
+	.title:hover {
+		text-decoration: underline;
+		text-decoration-color: var(--ink);
+	}
+
+	.desc {
+		color: var(--muted);
+		font-size: 15px;
+	}
+
+	.kind {
+		flex: 0 0 auto;
+		padding-top: 6px;
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 12px;
+	}
+</style>

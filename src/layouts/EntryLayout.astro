@@ -1,0 +1,653 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import DotField from '../components/DotField.astro';
+import EndMark from '../components/EndMark.astro';
+import Figure from '../components/Figure.astro';
+import Sidenote from '../components/Sidenote.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import {
+	entryUrl,
+	formatLong,
+	getPosts,
+	getProjects,
+	isoDate,
+	postType,
+	readingMinutes,
+	SITE,
+	type Entry,
+} from '../lib/site';
+
+interface Props {
+	entry: Entry;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+const isPost = d.kind === 'post';
+
+const [posts, projects] = await Promise.all([getPosts(), getProjects()]);
+const all = [...posts, ...projects];
+const related = d.related
+	.map((id) => all.find((e) => e.id === id))
+	.filter((e): e is Entry => Boolean(e));
+
+// Next: the following (older) entry, wrapping round for projects.
+// Projects cycle within their own group (main or "Smaller things").
+const siblings = isPost
+	? posts
+	: projects.filter((p) => p.data.minor === d.minor);
+const index = siblings.findIndex((e) => e.id === entry.id);
+const next = isPost
+	? siblings[index + 1]
+	: siblings.length > 1
+		? siblings[(index + 1) % siblings.length]
+		: undefined;
+
+const relatedProject = related.find((e) => e.data.kind === 'project');
+const relatedPosts = related.filter((e) => e.data.kind === 'post');
+
+const author = { '@type': 'Person', name: SITE.name, url: SITE.url };
+const url = new URL(entryUrl(entry), SITE.url).href;
+const jsonLd = isPost
+	? {
+			'@context': 'https://schema.org',
+			'@type': 'BlogPosting',
+			headline: d.title,
+			description: d.description,
+			datePublished: d.date.toISOString(),
+			url,
+			mainEntityOfPage: url,
+			author,
+		}
+	: {
+			'@context': 'https://schema.org',
+			'@type': 'CreativeWork',
+			name: d.title,
+			description: d.lede ?? d.description,
+			dateCreated: isoDate(d.date),
+			url,
+			author,
+			...(d.repo && { codeRepository: `https://github.com/${d.repo}` }),
+		};
+
+// The hero is 16:10; much wider or taller images keep their own shape
+// rather than losing their edges to the crop.
+const heroRatio = d.image ? d.image.width / d.image.height : 1.6;
+const heroFits = heroRatio > 1.3 && heroRatio < 1.95;
+
+const facts = isPost
+	? []
+	: [
+			{ k: 'year', v: String(d.date.getUTCFullYear()) },
+			{ k: 'with', v: d.with },
+			{ k: 'built with', v: d.stack.join(', ') || undefined },
+			{ k: 'used by', v: d.reach },
+		].filter((f) => f.v);
+---
+
+<BaseLayout
+	title={d.title}
+	description={d.description}
+	ogType={isPost ? 'article' : 'website'}
+	jsonLd={jsonLd}
+>
+	<div class="page">
+		<DotField
+			seed={d.title}
+			corners="tl"
+			tl={isPost ? { w: 240, h: 520 } : { w: 260, h: 520 }}
+		/>
+		<div class:list={['wrap', isPost ? 'entry-wrap--post' : 'entry-wrap']}>
+			<SiteHeader />
+
+			<main id="main-content" class="entry-main">
+				<article data-entry-content>
+					{
+						isPost ? (
+							<header class="post-head">
+								<p class="meta">
+									{postType(entry)} ·{' '}
+									<time datetime={isoDate(d.date)}>{formatLong(d.date)}</time> ·{' '}
+									{readingMinutes(entry.body)} min read
+								</p>
+								<h1 class="post-title">{d.title}</h1>
+								<p class="dek">{d.description}</p>
+							</header>
+						) : (
+							<header class="project-head">
+								<p class="breadcrumb">
+									<a href="/projects">projects</a> / {entry.id}
+								</p>
+								<h1 class="project-title">{d.title}</h1>
+								<p class="lede">{d.lede ?? d.description}</p>
+							</header>
+						)
+					}
+
+					{
+						!isPost && (
+							<dl class="facts">
+								{facts.map((f) => (
+									<>
+										<dt>{f.k}</dt>
+										<dd>{f.v}</dd>
+									</>
+								))}
+								{d.repo && (
+									<>
+										<dt>github</dt>
+										<dd>
+											<a href={`https://github.com/${d.repo}`}>{d.repo}</a>
+											{d.stars && ` · ${d.stars} stars`}
+										</dd>
+									</>
+								)}
+								{d.links.length > 0 && (
+									<>
+										<dt>install</dt>
+										<dd>
+											{d.links.map((l, i) => (
+												<>
+													{i > 0 && ' · '}
+													<a href={l.href}>{l.label}</a>
+												</>
+											))}
+										</dd>
+									</>
+								)}
+								{d.elsewhere.length > 0 && (
+									<>
+										<dt>elsewhere</dt>
+										<dd>
+											{d.elsewhere.map((l, i) => (
+												<>
+													{i > 0 && ' · '}
+													<a href={l.href}>{l.label}</a>
+												</>
+											))}
+										</dd>
+									</>
+								)}
+							</dl>
+						)
+					}
+
+					{
+						!isPost && d.image && (
+							<figure class:list={['hero', { 'hero--crop': heroFits }]}>
+								<Image
+									src={d.image}
+									alt={d.imageAlt ?? ''}
+									widths={[480, 680, 1024, 1360]}
+									sizes="(max-width: 712px) calc(100vw - 32px), 680px"
+									loading="eager"
+								/>
+								{d.imageCaption && <figcaption>{d.imageCaption}</figcaption>}
+							</figure>
+						)
+					}
+
+					<div class:list={['prose', isPost ? 'post-body' : 'project-body']}>
+						<Content components={{ Sidenote, Figure, EndMark }} />
+					</div>
+					<span class="entry-end" data-entry-end aria-hidden="true"></span>
+
+					{
+						relatedPosts.length > 0 && (
+							<section class="related" aria-labelledby="related-heading">
+								<h2 id="related-heading">Related writing</h2>
+								<ul class="plain-list">
+									{relatedPosts.map((p) => (
+										<li>
+											<a href={entryUrl(p)}>{p.data.title}</a>
+										</li>
+									))}
+								</ul>
+							</section>
+						)
+					}
+				</article>
+
+				<nav
+					class="entry-nav"
+					aria-label={isPost ? 'More writing' : 'More projects'}
+				>
+					{
+						isPost ? (
+							<a href="/writing">All writing</a>
+						) : (
+							<a href="/projects">All projects</a>
+						)
+					}
+					{
+						isPost && relatedProject ? (
+							<span>
+								Related project:{' '}
+								<a href={entryUrl(relatedProject)}>
+									{relatedProject.data.title}
+								</a>
+							</span>
+						) : (
+							next && (
+								<span>
+									Next: <a href={entryUrl(next)}>{next.data.title}</a>
+								</span>
+							)
+						)
+					}
+				</nav>
+			</main>
+
+			<SiteFooter />
+		</div>
+	</div>
+</BaseLayout>
+
+<script>
+	import { trackEvent } from '../scripts/analytics';
+
+	// Engagement events: visible reading time and reaching the end of an entry.
+	const entry = document.querySelector<HTMLElement>('[data-entry-content]');
+	const end = entry?.querySelector<HTMLElement>('[data-entry-end]');
+
+	if (entry && end) {
+		const milestones = [
+			{ ms: 15_000, name: 'entry-engaged-15s', done: false },
+			{ ms: 60_000, name: 'entry-engaged-60s', done: false },
+		];
+		let accumulated = 0;
+		let visibleSince: number | null =
+			document.visibilityState === 'visible' ? performance.now() : null;
+		let endVisible = false;
+		let endSince: number | null = null;
+		let endDone = false;
+
+		const elapsed = () =>
+			accumulated +
+			(visibleSince === null ? 0 : performance.now() - visibleSince);
+
+		const record = () => {
+			const t = elapsed();
+			milestones.forEach((m) => {
+				if (!m.done && t >= m.ms) {
+					m.done = true;
+					trackEvent(m.name);
+				}
+			});
+			if (
+				!endDone &&
+				endVisible &&
+				endSince !== null &&
+				t >= 15_000 &&
+				performance.now() - endSince >= 2000
+			) {
+				endDone = true;
+				trackEvent('entry-end-reached');
+				observer.disconnect();
+			}
+		};
+
+		const observer = new IntersectionObserver(
+			([e]) => {
+				endVisible = e.isIntersecting;
+				endSince =
+					endVisible && document.visibilityState === 'visible'
+						? performance.now()
+						: null;
+				record();
+			},
+			{ threshold: 1 },
+		);
+		observer.observe(end);
+		const timer = window.setInterval(record, 1000);
+
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') {
+				visibleSince = performance.now();
+				if (endVisible) endSince = performance.now();
+			} else {
+				if (visibleSince !== null)
+					accumulated += performance.now() - visibleSince;
+				visibleSince = null;
+				endSince = null;
+			}
+			record();
+		});
+
+		entry.querySelector('.prose')?.addEventListener('click', (event) => {
+			if (!(event.target instanceof Element)) return;
+			const link = event.target.closest<HTMLAnchorElement>('a[href]');
+			if (!link) return;
+			const dest = new URL(link.href, window.location.href);
+			if (
+				dest.origin !== window.location.origin &&
+				(dest.protocol === 'http:' || dest.protocol === 'https:')
+			)
+				trackEvent('external-link-click', { domain: dest.hostname });
+		});
+
+		window.addEventListener(
+			'pagehide',
+			() => {
+				window.clearInterval(timer);
+				observer.disconnect();
+			},
+			{ once: true },
+		);
+	}
+</script>
+
+<style>
+	/* Project pages: one 680px column. Posts: 680 text + 48 gap + 220 notes. */
+	.entry-wrap {
+		gap: 56px;
+	}
+
+	.entry-wrap--post {
+		max-width: calc(var(--column) + var(--gutter-l) + var(--gutter-r));
+	}
+
+	.entry-main {
+		display: flex;
+		flex-direction: column;
+		gap: 56px;
+	}
+
+	article {
+		display: flex;
+		flex-direction: column;
+		gap: 40px;
+	}
+
+	.entry-wrap--post article {
+		gap: 20px;
+	}
+
+	/* Post header */
+	.post-head {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		margin-bottom: 20px;
+	}
+
+	.meta,
+	.breadcrumb {
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 13px;
+		line-height: 1.5;
+	}
+
+	.breadcrumb a {
+		color: var(--muted);
+	}
+
+	.post-title {
+		font-family: var(--serif);
+		font-size: 50px;
+		font-weight: 400;
+		line-height: 1.1;
+		letter-spacing: -0.015em;
+		text-wrap: balance;
+	}
+
+	.dek {
+		color: var(--ink-2);
+		font-family: var(--serif);
+		font-size: 23px;
+		font-style: italic;
+		line-height: 1.5;
+	}
+
+	/* Project header */
+	.project-head {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.project-title {
+		font-size: 40px;
+		font-weight: 500;
+		line-height: 1.15;
+		letter-spacing: -0.02em;
+	}
+
+	.lede {
+		color: var(--ink-2);
+		font-size: 20px;
+		line-height: 1.5;
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: 6px 28px;
+		padding: 18px 0;
+		border-block: 1px solid var(--line);
+		font-family: var(--mono);
+		font-size: 13px;
+		line-height: 1.6;
+	}
+
+	.facts dt {
+		color: var(--muted);
+	}
+
+	.facts dd {
+		overflow-wrap: anywhere;
+	}
+
+	.hero {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.hero :global(img) {
+		width: 100%;
+		border-radius: 6px;
+		background: var(--surface);
+		object-fit: cover;
+	}
+
+	.hero--crop :global(img) {
+		aspect-ratio: 16 / 10;
+	}
+
+	.hero figcaption {
+		color: var(--muted);
+		font-size: 14px;
+		line-height: 1.5;
+	}
+
+	/* Bodies */
+	.prose {
+		font-family: var(--serif);
+	}
+
+	.post-body {
+		font-size: 21px;
+		line-height: 1.7;
+	}
+
+	.project-body {
+		font-size: 20px;
+		line-height: 1.7;
+	}
+
+	.prose :global(> *) {
+		margin-block: 0 22px;
+	}
+
+	.prose :global(> :last-child) {
+		margin-bottom: 0;
+	}
+
+	.prose :global(h2),
+	.prose :global(h3) {
+		margin-top: 28px;
+		margin-bottom: 14px;
+		font-family: var(--sans);
+		font-size: 22px;
+		font-weight: 600;
+		line-height: 1.3;
+	}
+
+	.prose :global(h3) {
+		font-size: 19px;
+	}
+
+	.prose :global(ul),
+	.prose :global(ol) {
+		padding-left: 1.3em;
+	}
+
+	.prose :global(li + li) {
+		margin-top: 6px;
+	}
+
+	.prose :global(blockquote) {
+		padding-left: 20px;
+		border-left: 1px solid var(--line);
+		color: var(--ink-2);
+		font-style: italic;
+	}
+
+	.prose :global(sup) {
+		line-height: 0;
+	}
+
+	.prose :global(sup a) {
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 12px;
+		text-decoration: none;
+	}
+
+	.prose :global(:not(pre) > code) {
+		padding: 1px 5px;
+		border-radius: 4px;
+		background: var(--surface);
+		font-size: 0.8em;
+	}
+
+	.prose :global(pre) {
+		overflow-x: auto;
+		margin-block: 6px 28px;
+		padding: 18px 20px;
+		border-radius: 6px;
+		background: var(--surface) !important;
+		font-size: 15px;
+		line-height: 1.6;
+	}
+
+	.prose :global(hr) {
+		height: 1px;
+		border: 0;
+		background: var(--line);
+	}
+
+	.prose :global(img) {
+		border-radius: 6px;
+	}
+
+	.prose :global(.sidenote) {
+		margin-top: -8px;
+	}
+
+	/* End mark after the last paragraph, unless the entry places its own. */
+	.post-body:not(:has(.end-mark)) :global(> p:last-of-type::after) {
+		display: inline-block;
+		width: 12px;
+		height: 19px;
+		margin-left: 10px;
+		background: radial-gradient(circle, var(--ink) 2.5px, transparent 2.7px) 0
+			0 / 7px 7px;
+		content: '';
+		vertical-align: -2px;
+	}
+
+	.entry-end {
+		display: block;
+		width: 1px;
+		height: 1px;
+	}
+
+	.related {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		font-size: 15px;
+	}
+
+	.related h2 {
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	.entry-nav {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 12px;
+		padding-top: 22px;
+		border-top: 1px solid var(--line);
+		font-size: 15px;
+	}
+
+	.entry-nav span {
+		color: var(--muted);
+	}
+
+	/* Wide screens: sidenotes move into a 220px column beside their paragraph. */
+	@media (min-width: 1040px) {
+		.entry-wrap--post {
+			max-width: calc(
+				var(--column) + var(--sidenote-gap) + var(--sidenote) +
+					var(--gutter-l) + var(--gutter-r)
+			);
+		}
+
+		.entry-wrap--post > :global(*:not(.site-header)) {
+			width: 100%;
+			max-width: var(--column);
+		}
+
+		.entry-wrap--post .entry-main {
+			max-width: none;
+		}
+
+		.entry-wrap--post article > :not(.post-body) {
+			max-width: var(--column);
+		}
+
+		.entry-wrap--post .entry-nav {
+			max-width: var(--column);
+		}
+
+		.post-body {
+			display: grid;
+			grid-template-columns: var(--column) var(--sidenote);
+			column-gap: var(--sidenote-gap);
+			align-items: start;
+		}
+
+		.post-body :global(> *) {
+			grid-column: 1;
+		}
+
+		.post-body :global(> .sidenote) {
+			grid-column: 2;
+			margin: 0;
+			padding-top: 6px;
+		}
+	}
+</style>

@@ -1,0 +1,30 @@
+---
+interface Props {
+	n: string | number;
+}
+const { n } = Astro.props;
+---
+
+<aside class="sidenote" id={`n${n}`} aria-label={`Note ${n}`}>
+	<span class="sidenote-n">{n}</span>
+	<slot />
+</aside>
+
+<style>
+	.sidenote {
+		color: var(--muted);
+		font-family: var(--sans);
+		font-size: 14px;
+		line-height: 1.5;
+	}
+
+	.sidenote-n {
+		margin-right: 4px;
+		font-family: var(--mono);
+		font-size: 12px;
+	}
+
+	.sidenote :global(a) {
+		color: var(--muted);
+	}
+</style>

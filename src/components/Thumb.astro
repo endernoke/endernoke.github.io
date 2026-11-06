@@ -1,0 +1,53 @@
+---
+import { Image } from 'astro:assets';
+import { dotThumbUri } from '../lib/dots';
+import type { Entry } from '../lib/site';
+
+interface Props {
+	project: Entry;
+	width: number;
+	height: number;
+}
+
+const { project, width, height } = Astro.props;
+const { image, imageAlt, title } = project.data;
+
+// No screenshot: a dot thumbnail seeded by the project name, drawn at build time.
+const svg = image ? undefined : dotThumbUri(width, height, title);
+---
+
+{
+	image ? (
+		<Image
+			class="thumb"
+			src={image}
+			alt={imageAlt ?? ''}
+			width={width}
+			height={height}
+			densities={[1, 2]}
+			fit="cover"
+			loading="lazy"
+			style={`width:${width}px;height:${height}px`}
+		/>
+	) : (
+		<img
+			class="thumb"
+			src={svg}
+			alt=""
+			aria-hidden="true"
+			width={width}
+			height={height}
+			style={`width:${width}px;height:${height}px`}
+		/>
+	)
+}
+
+<style>
+	.thumb {
+		flex: none;
+		max-width: 100%;
+		border-radius: 4px;
+		background: var(--surface);
+		object-fit: cover;
+	}
+</style>

@@ -1,0 +1,114 @@
+---
+import IndexLayout from '../layouts/IndexLayout.astro';
+import PostRow from './PostRow.astro';
+import SectionLabel from './SectionLabel.astro';
+import { getPosts, POST_FILTERS, postType } from '../lib/site';
+
+interface Props {
+	/** Filter slug ("essays", "stories", "notes"); omit for all posts. */
+	filter?: keyof typeof POST_FILTERS;
+}
+
+const { filter } = Astro.props;
+const posts = (await getPosts()).filter(
+	(p) => !filter || postType(p) === POST_FILTERS[filter],
+);
+
+const years = [...new Set(posts.map((p) => p.data.date.getUTCFullYear()))];
+const filters = [
+	{ href: '/writing', label: 'all', active: !filter },
+	...Object.keys(POST_FILTERS).map((slug) => ({
+		href: `/writing/${slug}`,
+		label: slug,
+		active: slug === filter,
+	})),
+];
+const title = filter ? `Writing: ${filter}` : 'Writing';
+---
+
+<IndexLayout
+	title={title}
+	description="Essays on technology, stories about people and places, and notes from building things, by James Zheng."
+	seed="writing"
+	mainGap={48}
+>
+	<div class="page-head">
+		<h1 class="page-title">Writing</h1>
+		<p class="page-intro">
+			Essays on technology, stories about people and places, and notes from
+			building things. New pieces arrive by <a href="/rss.xml">RSS</a>.
+		</p>
+		<nav class="filters" aria-label="Filter by kind">
+			{
+				filters.map((f, i) => (
+					<>
+						{i > 0 && <span aria-hidden="true">·</span>}
+						<a href={f.href} aria-current={f.active ? 'page' : undefined}>
+							{f.label}
+						</a>
+					</>
+				))
+			}
+		</nav>
+	</div>
+
+	{
+		years.map((year) => (
+			<section class="year" aria-labelledby={`y${year}`}>
+				<SectionLabel id={`y${year}`}>{year}</SectionLabel>
+				<ol class="plain-list">
+					{posts
+						.filter((p) => p.data.date.getUTCFullYear() === year)
+						.map((post) => (
+							<PostRow post={post} variant="day" />
+						))}
+				</ol>
+			</section>
+		))
+	}
+	{
+		posts.length === 0 && (
+			<p class="empty">Nothing here yet. The first pieces are on their way.</p>
+		)
+	}
+</IndexLayout>
+
+<style>
+	.filters {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 10px;
+		margin-top: 6px;
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 13px;
+	}
+
+	.filters a {
+		color: var(--muted);
+	}
+
+	.filters a[aria-current] {
+		color: var(--ink);
+		font-weight: 500;
+		text-decoration: none;
+	}
+
+	.year {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.year :global(.post-row) {
+		padding-block: 16px;
+	}
+
+	.year :global(.post-row .title) {
+		font-size: 22px;
+	}
+
+	.empty {
+		color: var(--ink-2);
+	}
+</style>

@@ -1,0 +1,92 @@
+---
+import Thumb from './Thumb.astro';
+import { entryUrl, factsLine, type Entry } from '../lib/site';
+
+interface Props {
+	project: Entry;
+	/** "home": 120×80 thumbnail, short text. "index": 160×104 with facts line. */
+	variant?: 'home' | 'index';
+}
+
+const { project, variant = 'index' } = Astro.props;
+const { title, date, description, blurb } = project.data;
+const home = variant === 'home';
+const facts = home ? '' : factsLine(project);
+---
+
+<li class:list={['project-row', variant]}>
+	<Thumb project={project} width={home ? 120 : 160} height={home ? 80 : 104} />
+	<div class="text">
+		<span class="name-line">
+			<a class="name" href={entryUrl(project)}>{title}</a>
+			<time class="year" datetime={String(date.getUTCFullYear())}
+				>{date.getUTCFullYear()}</time
+			>
+		</span>
+		<span class="desc">{home ? (blurb ?? description) : description}</span>
+		{facts && <span class="facts">{facts}</span>}
+	</div>
+</li>
+
+<style>
+	.project-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: 12px 20px;
+	}
+
+	.project-row.index {
+		gap: 14px 24px;
+		padding: 26px 0;
+		border-top: 1px solid var(--line);
+	}
+
+	.text {
+		display: flex;
+		flex: 1 1 360px;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.index .text {
+		gap: 6px;
+	}
+
+	.name-line {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 12px;
+	}
+
+	.name {
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.name:hover {
+		text-decoration: underline;
+		text-decoration-color: var(--ink);
+	}
+
+	.index .name {
+		font-size: 19px;
+	}
+
+	.year,
+	.facts {
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 12px;
+	}
+
+	.desc {
+		color: var(--ink-2);
+	}
+
+	.facts {
+		line-height: 1.6;
+	}
+</style>
