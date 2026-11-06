@@ -105,15 +105,27 @@ pre {
 	white-space: nowrap;
 }
 
-/* Page frame: one centred reading column with safe-area gutters. */
+/* Page frame: one centred reading column with safe-area gutters. The frame
+   is at least one screen tall and main takes the spare height, so the footer
+   sits at the bottom of short pages. svh (toolbars shown) keeps it in view
+   on mobile. */
 .page {
 	position: relative;
+	display: flex;
+	flex-direction: column;
 	min-height: 100vh;
+	min-height: 100svh;
 	overflow-x: clip;
+}
+
+.wrap > main {
+	flex: 1 0 auto;
 }
 
 .wrap {
 	position: relative;
+	flex: 1 0 auto;
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 64px;
