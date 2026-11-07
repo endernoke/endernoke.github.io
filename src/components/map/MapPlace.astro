@@ -1,0 +1,137 @@
+---
+// One place on the map: a marker button at the place's coordinates and the
+// album card it opens. The wrapper's top-left corner is the marker's centre;
+// scripts/map/clusters.ts moves it (by margin, never transform, so the fixed
+// mobile card inside stays fixed to the viewport) when a cluster expands.
+import { markerStyle, type Place } from '../../lib/map/places';
+import PlaceCard from './PlaceCard.astro';
+
+interface Props {
+	place: Place;
+}
+
+const { place } = Astro.props;
+---
+
+<div
+	class="place"
+	style={markerStyle(place)}
+	data-latitude={place.latitude}
+	data-longitude={place.longitude}
+>
+	<button
+		class="marker"
+		type="button"
+		data-place-name={place.name}
+		aria-label={`Show photos from ${place.name}`}
+		aria-expanded="false"
+		aria-controls={`${place.id}-popup`}
+	>
+		<span aria-hidden="true"></span>
+	</button>
+	<PlaceCard place={place} />
+</div>
+
+<style>
+	.place {
+		position: absolute;
+		top: var(--marker-y);
+		left: var(--marker-x);
+		z-index: 2;
+		transition:
+			margin-left 180ms ease,
+			margin-top 180ms ease;
+	}
+
+	.place.is-clustered:not(.is-spiderfied) .marker {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.place.is-spiderfied {
+		margin-top: var(--spider-offset-y);
+		margin-left: var(--spider-offset-x);
+	}
+
+	.place:hover,
+	.place:focus-within,
+	.place:has(.marker[aria-expanded='true']) {
+		z-index: 8;
+	}
+
+	.marker {
+		position: relative;
+		display: grid;
+		width: 20px;
+		height: 20px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		place-items: center;
+		background: transparent;
+		cursor: pointer;
+		transform: translate(-50%, -50%);
+		transition: opacity 140ms ease;
+	}
+
+	/* While a cluster is expanded, every other marker dims. */
+	:global(.has-expanded-cluster) .place:not(.is-clustered) .marker:disabled {
+		opacity: 0.18;
+		cursor: default;
+		pointer-events: none;
+	}
+
+	/* Name tooltip on hover and keyboard focus. */
+	.marker::after {
+		position: absolute;
+		bottom: calc(100% + 5px);
+		left: 50%;
+		padding: 2px 6px;
+		border: 1px solid var(--card-line);
+		border-radius: 4px;
+		color: var(--ink);
+		background: var(--paper);
+		content: attr(data-place-name);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 1.35;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateX(-50%);
+		transition: opacity 120ms ease;
+		white-space: nowrap;
+	}
+
+	.marker:not(:disabled):hover::after,
+	.marker:not(:disabled):focus-visible::after {
+		opacity: 1;
+	}
+
+	.marker[aria-expanded='true']::after {
+		opacity: 0;
+	}
+
+	/* Ink dot, 2px paper ring, 1px ink outer ring (2px when open). */
+	.marker span {
+		display: block;
+		width: 10px;
+		height: 10px;
+		border: 2px solid var(--paper);
+		border-radius: 50%;
+		background: var(--ink);
+		box-shadow: 0 0 0 1px var(--ink);
+		box-sizing: content-box;
+	}
+
+	.marker:not(:disabled):hover span,
+	.marker[aria-expanded='true'] span {
+		box-shadow: 0 0 0 2px var(--ink);
+	}
+
+	@media (pointer: coarse) {
+		.marker {
+			width: 1.8rem;
+			height: 1.8rem;
+		}
+	}
+</style>

@@ -1,0 +1,210 @@
+---
+// The travels map: a toolbar with a "Jump to" list, the coastline with a
+// marker and album card per place, and layers for cluster buttons and their
+// leader lines (filled in by scripts/map/clusters.ts).
+import { getPlaces } from '../../lib/map/places';
+import MapPlace from './MapPlace.astro';
+import WorldOutline from './WorldOutline.astro';
+
+const places = await getPlaces();
+const placeOptions = [...places].sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<div class="map-component" data-world-map>
+	<div class="map-toolbar">
+		<p class="map-instructions" id="map-instructions">
+			Choose a marker or use the location list.
+		</p>
+		<label class="place-picker">
+			<span>Jump to</span>
+			<select data-place-picker>
+				<option value="">Choose a place</option>
+				{
+					placeOptions.map((place) => (
+						<option value={`${place.id}-popup`}>{place.name}</option>
+					))
+				}
+			</select>
+		</label>
+	</div>
+	<div class="map-frame" aria-describedby="map-instructions" data-map-frame>
+		<WorldOutline />
+		<svg class="cluster-lines" data-cluster-lines aria-hidden="true"></svg>
+		<div class="cluster-buttons" data-cluster-buttons></div>
+		{places.map((place) => <MapPlace place={place} />)}
+	</div>
+	<p class="map-caption">
+		Map outline from <a href="https://www.naturalearthdata.com/" rel="external"
+			>Natural Earth</a
+		>.
+	</p>
+</div>
+
+<script>
+	import { initWorldMap } from '../../scripts/map/world-map';
+
+	document
+		.querySelectorAll<HTMLElement>('[data-world-map]')
+		.forEach(initWorldMap);
+</script>
+
+<style>
+	.map-component {
+		/* Borders for the card, tooltip and select: a step darker than --line. */
+		--card-line: color-mix(in srgb, var(--ink) 16%, var(--paper));
+
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.map-toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px 16px;
+	}
+
+	.map-instructions,
+	.place-picker {
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+	.place-picker {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.place-picker select {
+		min-height: 36px;
+		max-width: 200px;
+		padding: 4px 8px;
+		border: 1px solid var(--card-line);
+		border-radius: 4px;
+		color: var(--ink);
+		background: var(--paper);
+		font: inherit;
+	}
+
+	.map-caption {
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 12px;
+		line-height: 1.55;
+	}
+
+	.map-caption a {
+		color: inherit;
+	}
+
+	.map-frame {
+		position: relative;
+		width: 100%;
+		border-block: 1px solid var(--line);
+		color: var(--map-line);
+		background-image: radial-gradient(
+			circle,
+			var(--map-grid) 1px,
+			transparent 1.2px
+		);
+		background-size: 18px 18px;
+	}
+
+	/* Cluster layers. Buttons and lines are created by script, hence :global. */
+	.cluster-lines,
+	.cluster-buttons {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	.cluster-lines {
+		z-index: 1;
+		overflow: visible;
+	}
+
+	.cluster-lines :global(line) {
+		stroke: var(--ink);
+		stroke-dasharray: 2 3;
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.cluster-buttons {
+		z-index: 4;
+	}
+
+	.cluster-buttons :global(.cluster-button) {
+		position: absolute;
+		display: grid;
+		width: 26px;
+		height: 26px;
+		padding: 0;
+		border: 1px solid var(--ink);
+		border-radius: 50%;
+		place-items: center;
+		color: var(--ink);
+		background: var(--paper);
+		font: inherit;
+		font-family: var(--mono);
+		font-size: 12px;
+		font-weight: 500;
+		cursor: pointer;
+		pointer-events: auto;
+		transform: translate(-50%, -50%);
+		transition:
+			color 140ms ease,
+			background-color 140ms ease,
+			opacity 140ms ease;
+	}
+
+	.cluster-buttons
+		:global(.cluster-button:not(:disabled):not([aria-expanded='true']):hover) {
+		color: var(--paper);
+		background: var(--ink);
+	}
+
+	.cluster-buttons :global(.cluster-button[aria-expanded='true']) {
+		background: color-mix(in srgb, var(--paper) 70%, transparent);
+		opacity: 0.6;
+	}
+
+	.cluster-buttons :global(.cluster-button[aria-expanded='true']:hover),
+	.cluster-buttons
+		:global(.cluster-button[aria-expanded='true']:focus-visible) {
+		background: var(--paper);
+		opacity: 1;
+	}
+
+	.cluster-buttons :global(.cluster-button:disabled) {
+		opacity: 0.18;
+		cursor: default;
+		pointer-events: none;
+	}
+
+	@media (pointer: coarse) {
+		.cluster-buttons :global(.cluster-button) {
+			width: 2rem;
+			height: 2rem;
+		}
+	}
+
+	@media (max-width: 42rem) {
+		.map-toolbar {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.place-picker select {
+			flex: 1;
+			max-width: none;
+			min-height: 2.75rem;
+		}
+	}
+</style>

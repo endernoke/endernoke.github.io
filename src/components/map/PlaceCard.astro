@@ -1,0 +1,300 @@
+---
+// The album card a marker opens: the photo on top (with the close button and
+// carousel arrows over it), then the place name and slide count, then the
+// current photo's note. A place without photos shows its own note instead.
+// Positioned by --card-x / --card-y from scripts/map/card.ts; a bottom sheet
+// below 42rem.
+import { Image } from 'astro:assets';
+import type { Place } from '../../lib/map/places';
+import PlaceNote from './PlaceNote.astro';
+
+interface Props {
+	place: Place;
+}
+
+const { place } = Astro.props;
+const { id, name, photos } = place;
+const noteId = (index: number) => `${id}-note-${index}`;
+const notes =
+	photos.length > 0 ? photos : [{ note: place.note, link: place.link }];
+---
+
+<article
+	class:list={['place-card', { 'has-photos': photos.length > 0 }]}
+	id={`${id}-popup`}
+	aria-labelledby={`${id}-title`}
+	data-place-card
+	data-index="0"
+	tabindex="-1"
+	hidden
+>
+	{
+		photos.length > 0 && (
+			<div class="photos">
+				{photos.map((photo, index) => (
+					<figure
+						class="slide"
+						role="group"
+						aria-roledescription="slide"
+						aria-label={`${index + 1} of ${photos.length}`}
+						aria-describedby={
+							photo.note || photo.link ? noteId(index) : undefined
+						}
+						hidden={index !== 0}
+					>
+						<Image
+							src={photo.image}
+							alt={photo.alt}
+							width={640}
+							widths={[320, 480, 640, 960]}
+							sizes="(max-width: 42rem) calc(100vw - 2rem), 320px"
+							quality={75}
+							loading="lazy"
+						/>
+					</figure>
+				))}
+				{photos.length > 1 && (
+					<nav class="carousel-controls" aria-label={`${name} photo controls`}>
+						<button
+							class="carousel-button"
+							type="button"
+							data-carousel-previous
+							aria-label={`Previous ${name} photo`}
+						>
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<path d="m10 3-5 5 5 5" />
+							</svg>
+						</button>
+						<button
+							class="carousel-button"
+							type="button"
+							data-carousel-next
+							aria-label={`Next ${name} photo`}
+						>
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<path d="m6 3 5 5-5 5" />
+							</svg>
+						</button>
+					</nav>
+				)}
+			</div>
+		)
+	}
+	<div class="place-card-body">
+		<header class="place-card-header">
+			<h3 id={`${id}-title`}>{name}</h3>
+			{
+				photos.length > 1 && (
+					<span class="slide-count" aria-live="polite" aria-atomic="true">
+						1 / {photos.length}
+					</span>
+				)
+			}
+		</header>
+		{
+			notes.map(
+				({ note, link }, index) =>
+					(note || link) && (
+						<PlaceNote
+							id={noteId(index)}
+							index={index}
+							note={note}
+							link={link}
+						/>
+					),
+			)
+		}
+	</div>
+	<button
+		class="place-card-close"
+		type="button"
+		data-place-close
+		aria-label={`Close ${name} album`}
+	>
+		<svg viewBox="0 0 16 16" aria-hidden="true">
+			<path d="m3.5 3.5 9 9m0-9-9 9"></path>
+		</svg>
+	</button>
+</article>
+
+<style>
+	.place-card {
+		--card-x: -50%;
+		--card-y: calc(-100% - 22px);
+
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 5;
+		width: 320px;
+		overflow: hidden;
+		border: 1px solid var(--card-line);
+		border-radius: 6px;
+		color: var(--ink);
+		background: var(--paper);
+		box-shadow: 0 10px 25px rgb(29 30 32 / 9%);
+		transform: translate(var(--card-x), var(--card-y));
+	}
+
+	.place-card[hidden] {
+		display: none;
+	}
+
+	.photos {
+		position: relative;
+		background: var(--placeholder);
+	}
+
+	.slide[hidden] {
+		display: none;
+	}
+
+	.photos img {
+		width: 100%;
+		aspect-ratio: 16 / 10;
+		max-height: min(16rem, 42dvh);
+		object-fit: cover;
+	}
+
+	.place-card-body {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 12px 16px 14px;
+	}
+
+	.place-card-header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+	}
+
+	/* No photo: the close button sits beside the name. */
+	.place-card:not(.has-photos) .place-card-header {
+		padding-right: 28px;
+	}
+
+	h3 {
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 1.35;
+	}
+
+	.slide-count {
+		flex: none;
+		color: var(--muted);
+		font-family: var(--mono);
+		font-size: 12px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.place-card-close {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		z-index: 1;
+		display: grid;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: 1px solid transparent;
+		border-radius: 50%;
+		place-items: center;
+		color: var(--muted);
+		background: transparent;
+		cursor: pointer;
+		transition:
+			color 140ms ease,
+			background-color 140ms ease;
+	}
+
+	.place-card-close:hover {
+		color: var(--ink);
+	}
+
+	/* Over a photo it gets the same frosted paper disc as the arrows. */
+	.has-photos .place-card-close,
+	.carousel-button {
+		border-color: color-mix(in srgb, var(--ink) 14%, transparent);
+		color: var(--ink);
+		background: color-mix(in srgb, var(--paper) 72%, transparent);
+	}
+
+	.has-photos .place-card-close:hover,
+	.carousel-button:hover {
+		background: color-mix(in srgb, var(--paper) 94%, transparent);
+	}
+
+	.place-card-close svg {
+		width: 12px;
+		height: 12px;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-width: 1.5;
+	}
+
+	.carousel-controls {
+		position: absolute;
+		top: 50%;
+		right: 8px;
+		left: 8px;
+		display: flex;
+		justify-content: space-between;
+		pointer-events: none;
+		transform: translateY(-50%);
+	}
+
+	.carousel-button {
+		display: grid;
+		width: 34px;
+		height: 34px;
+		padding: 0;
+		border: 1px solid;
+		border-radius: 50%;
+		place-items: center;
+		cursor: pointer;
+		pointer-events: auto;
+		transition: background-color 140ms ease;
+	}
+
+	.carousel-button svg {
+		width: 14px;
+		height: 14px;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 1.75;
+	}
+
+	@media (pointer: coarse) {
+		.carousel-button {
+			width: 2.75rem;
+			height: 2.75rem;
+		}
+	}
+
+	/* Narrow screens: a bottom sheet over the page. */
+	@media (max-width: 42rem) {
+		.place-card {
+			position: fixed;
+			top: auto;
+			right: max(1rem, env(safe-area-inset-right));
+			bottom: max(1rem, env(safe-area-inset-bottom));
+			left: max(1rem, env(safe-area-inset-left));
+			z-index: 20;
+			width: auto;
+			max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			transform: none;
+		}
+
+		.carousel-button {
+			width: 2.75rem;
+			height: 2.75rem;
+		}
+	}
+</style>

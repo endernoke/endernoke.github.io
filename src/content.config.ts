@@ -53,7 +53,8 @@ const places = defineCollection({
 		name: z.string(),
 		latitude: z.number().min(-90).max(90),
 		longitude: z.number().min(-180).max(180),
-		note: z.string().optional(),
+		note: z.string().optional(), // a sentence or a few; [text](href) links
+		link: link.optional(), // shown under the note
 	}),
 });
 

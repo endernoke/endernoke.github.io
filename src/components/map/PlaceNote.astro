@@ -1,0 +1,68 @@
+---
+// A photo's (or a photo-less place's) note: a few sentences that can hold
+// `[text](href)` links, plus an optional link line underneath.
+import { isExternal, noteParts, type Link } from '../../lib/map/places';
+
+interface Props {
+	id: string;
+	/** Slide this note belongs to; the carousel shows one note at a time. */
+	index: number;
+	note?: string;
+	link?: Link;
+}
+
+const { id, index, note, link } = Astro.props;
+const rel = (href: string) => (isExternal(href) ? 'external' : undefined);
+---
+
+<div class="place-note" id={id} data-slide-note={index} hidden={index !== 0}>
+	{
+		note && (
+			<p>
+				{noteParts(note).map(({ text, href }) =>
+					href ? (
+						<a href={href} rel={rel(href)}>
+							{text}
+						</a>
+					) : (
+						text
+					),
+				)}
+			</p>
+		)
+	}
+	{
+		link && (
+			<a class="note-link" href={link.href} rel={rel(link.href)}>
+				{link.label}
+				<span aria-hidden="true"> →</span>
+			</a>
+		)
+	}
+</div>
+
+<style>
+	.place-note {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		color: var(--ink-2);
+		font-size: 14px;
+		line-height: 1.5;
+		overflow-wrap: anywhere;
+	}
+
+	.place-note[hidden] {
+		display: none;
+	}
+
+	.note-link {
+		font-weight: 500;
+		text-decoration: none;
+	}
+
+	.note-link:hover {
+		text-decoration: underline;
+	}
+</style>
