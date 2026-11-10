@@ -18,8 +18,6 @@
 	--mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
 	--column: 680px;
-	--sidenote: 220px;
-	--sidenote-gap: 48px;
 	--gutter-l: max(16px, env(safe-area-inset-left));
 	--gutter-r: max(16px, env(safe-area-inset-right));
 }

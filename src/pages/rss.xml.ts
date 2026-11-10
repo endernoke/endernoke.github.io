@@ -3,9 +3,7 @@ import type { APIRoute } from 'astro';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { render } from 'astro:content';
 import mdxRenderer from '@astrojs/mdx/server.js';
-import EndMark from '../components/EndMark.astro';
 import Figure from '../components/Figure.astro';
-import Sidenote from '../components/Sidenote.astro';
 import { entryUrl, getPosts, SITE } from '../lib/site';
 
 export const GET: APIRoute = async ({ site }) => {
@@ -18,7 +16,7 @@ export const GET: APIRoute = async ({ site }) => {
 		posts.map(async (post) => {
 			const { Content } = await render(post);
 			const html = await container.renderToString(Content, {
-				props: { components: { Sidenote, Figure, EndMark } },
+				props: { components: { Figure } },
 			});
 			return {
 				title: post.data.title,

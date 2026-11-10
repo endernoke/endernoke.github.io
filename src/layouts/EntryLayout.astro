@@ -3,9 +3,7 @@ import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import DotField from '../components/DotField.astro';
-import EndMark from '../components/EndMark.astro';
 import Figure from '../components/Figure.astro';
-import Sidenote from '../components/Sidenote.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import {
@@ -190,7 +188,7 @@ const facts = isPost
 					}
 
 					<div class:list={['prose', isPost ? 'post-body' : 'project-body']}>
-						<Content components={{ Sidenote, Figure, EndMark }} />
+						<Content components={{ Figure }} />
 					</div>
 					<span class="entry-end" data-entry-end aria-hidden="true"></span>
 
@@ -340,7 +338,7 @@ const facts = isPost
 </script>
 
 <style>
-	/* Project pages: one 680px column. Posts: 680 text + 48 gap + 220 notes. */
+	/* Entry pages use a single 680px reading column. */
 	.entry-wrap {
 		gap: 56px;
 	}
@@ -517,17 +515,6 @@ const facts = isPost
 		font-style: italic;
 	}
 
-	.prose :global(sup) {
-		line-height: 0;
-	}
-
-	.prose :global(sup a) {
-		color: var(--muted);
-		font-family: var(--mono);
-		font-size: 12px;
-		text-decoration: none;
-	}
-
 	.prose :global(:not(pre) > code) {
 		padding: 1px 5px;
 		border-radius: 4px;
@@ -553,22 +540,6 @@ const facts = isPost
 
 	.prose :global(img) {
 		border-radius: 6px;
-	}
-
-	.prose :global(.sidenote) {
-		margin-top: -8px;
-	}
-
-	/* End mark after the last paragraph, unless the entry places its own. */
-	.post-body:not(:has(.end-mark)) :global(> p:last-of-type::after) {
-		display: inline-block;
-		width: 12px;
-		height: 19px;
-		margin-left: 10px;
-		background: radial-gradient(circle, var(--ink) 2.5px, transparent 2.7px) 0
-			0 / 7px 7px;
-		content: '';
-		vertical-align: -2px;
 	}
 
 	.entry-end {
@@ -603,49 +574,5 @@ const facts = isPost
 
 	.entry-nav span {
 		color: var(--muted);
-	}
-
-	/* Wide screens: sidenotes move into a 220px column beside their paragraph. */
-	@media (min-width: 1040px) {
-		.entry-wrap--post {
-			max-width: calc(
-				var(--column) + var(--sidenote-gap) + var(--sidenote) +
-					var(--gutter-l) + var(--gutter-r)
-			);
-		}
-
-		.entry-wrap--post > :global(*:not(.site-header)) {
-			width: 100%;
-			max-width: var(--column);
-		}
-
-		.entry-wrap--post .entry-main {
-			max-width: none;
-		}
-
-		.entry-wrap--post article > :not(.post-body) {
-			max-width: var(--column);
-		}
-
-		.entry-wrap--post .entry-nav {
-			max-width: var(--column);
-		}
-
-		.post-body {
-			display: grid;
-			grid-template-columns: var(--column) var(--sidenote);
-			column-gap: var(--sidenote-gap);
-			align-items: start;
-		}
-
-		.post-body :global(> *) {
-			grid-column: 1;
-		}
-
-		.post-body :global(> .sidenote) {
-			grid-column: 2;
-			margin: 0;
-			padding-top: 6px;
-		}
 	}
 </style>
