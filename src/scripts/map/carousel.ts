@@ -1,5 +1,5 @@
-// Photo carousel inside a place card: one slide and its note visible at a
-// time, the "1 / 3" count kept in step, and nearby slides fetched early.
+// Photo carousel inside a place card: one slide (with its caption) visible at
+// a time, the "1 / 3" count kept in step, and nearby slides fetched early.
 
 const slidesOf = (card: HTMLElement) =>
 	card.querySelectorAll<HTMLElement>('.slide');
@@ -26,7 +26,7 @@ export const warmSlide = (
 	image.loading = 'eager';
 };
 
-/** Shows slide `index` (wrapping around) and its note. */
+/** Shows slide `index` (wrapping around). */
 export const showSlide = (card: HTMLElement, index: number, preload = true) => {
 	const slides = slidesOf(card);
 	if (slides.length === 0) return;
@@ -42,9 +42,6 @@ export const showSlide = (card: HTMLElement, index: number, preload = true) => {
 	slides.forEach((slide, i) => {
 		slide.hidden = i !== active;
 	});
-	card.querySelectorAll<HTMLElement>('[data-slide-note]').forEach((note) => {
-		note.hidden = Number(note.dataset.slideNote) !== active;
-	});
 	card.dataset.index = String(active);
 
 	const count = card.querySelector<HTMLElement>('.slide-count');
@@ -53,7 +50,7 @@ export const showSlide = (card: HTMLElement, index: number, preload = true) => {
 
 /**
  * Wires the previous/next buttons and the Left/Right arrow keys. `onBrowse`
- * runs after every change (the card's height can change with its note).
+ * runs after every change (the card's height can change with its caption).
  */
 export const setupCarousel = (card: HTMLElement, onBrowse: () => void) => {
 	const step = (by: number) => {

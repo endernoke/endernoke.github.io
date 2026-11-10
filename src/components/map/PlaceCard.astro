@@ -1,7 +1,8 @@
 ---
 // The album card a marker opens: the photo on top (with the close button and
-// carousel arrows over it), then the place name and slide count, then the
-// current photo's note. A place without photos shows its own note instead.
+// carousel arrows over it) and the current photo's note as its caption, then
+// the place name, slide count and the place's own note. Either note, both or
+// neither can appear.
 // Positioned by --card-x / --card-y from scripts/map/card.ts; a bottom sheet
 // below 42rem.
 import { Image } from 'astro:assets';
@@ -14,15 +15,16 @@ interface Props {
 
 const { place } = Astro.props;
 const { id, name, photos } = place;
-const noteId = (index: number) => `${id}-note-${index}`;
-const notes =
-	photos.length > 0 ? photos : [{ note: place.note, link: place.link }];
+const captionId = (index: number) => `${id}-caption-${index}`;
+const placeNoteId = `${id}-note`;
+const hasPlaceNote = Boolean(place.note || place.link);
 ---
 
 <article
 	class:list={['place-card', { 'has-photos': photos.length > 0 }]}
 	id={`${id}-popup`}
 	aria-labelledby={`${id}-title`}
+	aria-describedby={hasPlaceNote ? placeNoteId : undefined}
 	data-place-card
 	data-index="0"
 	tabindex="-1"
@@ -38,7 +40,7 @@ const notes =
 						aria-roledescription="slide"
 						aria-label={`${index + 1} of ${photos.length}`}
 						aria-describedby={
-							photo.note || photo.link ? noteId(index) : undefined
+							photo.note || photo.link ? captionId(index) : undefined
 						}
 						hidden={index !== 0}
 					>
@@ -51,6 +53,14 @@ const notes =
 							quality={75}
 							loading="lazy"
 						/>
+						{(photo.note || photo.link) && (
+							<PlaceNote
+								id={captionId(index)}
+								variant="caption"
+								note={photo.note}
+								link={photo.link}
+							/>
+						)}
 					</figure>
 				))}
 				{photos.length > 1 && (
@@ -92,16 +102,13 @@ const notes =
 			}
 		</header>
 		{
-			notes.map(
-				({ note, link }, index) =>
-					(note || link) && (
-						<PlaceNote
-							id={noteId(index)}
-							index={index}
-							note={note}
-							link={link}
-						/>
-					),
+			hasPlaceNote && (
+				<PlaceNote
+					id={placeNoteId}
+					variant="body"
+					note={place.note}
+					link={place.link}
+				/>
 			)
 		}
 	</div>
@@ -140,9 +147,13 @@ const notes =
 		display: none;
 	}
 
+	/* Sized by its width so the arrows can centre on the photo, not on the
+	   photo plus its caption. */
 	.photos {
+		--photo-height: min(100cqi * 10 / 16, 16rem, 42dvh);
+
 		position: relative;
-		background: var(--placeholder);
+		container-type: inline-size;
 	}
 
 	.slide[hidden] {
@@ -151,9 +162,9 @@ const notes =
 
 	.photos img {
 		width: 100%;
-		aspect-ratio: 16 / 10;
-		max-height: min(16rem, 42dvh);
+		height: var(--photo-height);
 		object-fit: cover;
+		background: var(--placeholder);
 	}
 
 	.place-card-body {
@@ -237,7 +248,7 @@ const notes =
 
 	.carousel-controls {
 		position: absolute;
-		top: 50%;
+		top: calc(var(--photo-height) / 2);
 		right: 8px;
 		left: 8px;
 		display: flex;

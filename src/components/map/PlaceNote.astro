@@ -1,21 +1,22 @@
 ---
-// A photo's (or a photo-less place's) note: a few sentences that can hold
-// `[text](href)` links, plus an optional link line underneath.
+// A note in a place card: a few sentences that can hold `[text](href)` links,
+// plus an optional link line underneath. `caption` is a photo's note, set
+// under the photo as its figcaption; `body` is the place's own note.
 import { isExternal, noteParts, type Link } from '../../lib/map/places';
 
 interface Props {
 	id: string;
-	/** Slide this note belongs to; the carousel shows one note at a time. */
-	index: number;
+	variant: 'caption' | 'body';
 	note?: string;
 	link?: Link;
 }
 
-const { id, index, note, link } = Astro.props;
+const { id, variant, note, link } = Astro.props;
+const Tag = variant === 'caption' ? 'figcaption' : 'div';
 const rel = (href: string) => (isExternal(href) ? 'external' : undefined);
 ---
 
-<div class="place-note" id={id} data-slide-note={index} hidden={index !== 0}>
+<Tag class:list={['place-note', variant]} id={id}>
 	{
 		note && (
 			<p>
@@ -39,22 +40,32 @@ const rel = (href: string) => (isExternal(href) ? 'external' : undefined);
 			</a>
 		)
 	}
-</div>
+</Tag>
 
 <style>
 	.place-note {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+		overflow-wrap: anywhere;
+	}
+
+	.body {
 		gap: 8px;
 		color: var(--ink-2);
 		font-size: 14px;
 		line-height: 1.5;
-		overflow-wrap: anywhere;
 	}
 
-	.place-note[hidden] {
-		display: none;
+	/* Under the photo, ruled off from the card body. */
+	.caption {
+		gap: 6px;
+		margin: 0 16px;
+		padding: 10px 0;
+		border-bottom: 1px solid var(--line);
+		color: var(--muted);
+		font-size: 13px;
+		line-height: 1.45;
 	}
 
 	.note-link {

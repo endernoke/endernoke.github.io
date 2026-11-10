@@ -1,0 +1,38 @@
+{
+  "name": "San Francisco Bay Area",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "note": "First pilgrimage to the promised land flowing with tech startups and venture capital.",
+  "photos": {
+    "0-cal-hacks-team-with-anthropic.jpg": {
+      "alt": "James and his TouchSpace teammates posing with an Anthropic representative between tall stone columns and trees.",
+      "note": "We built TouchSpace at Cal Hacks 13.0, interactive tactile maps of indoor spaces for blind and visually impaired visitors. [Read more about our project](/projects/touchspace)"
+    },
+    "1-cal-hacks-team-with-claude.jpg": {
+      "alt": "James and his TouchSpace teammates sitting on a table draped with a black Claude banner at Cal Hacks.",
+      "note": "We built TouchSpace at Cal Hacks 13.0, interactive tactile maps of indoor spaces for blind and visually impaired visitors. [Read more about our project](/projects/touchspace)"
+    },
+    "2-dd0ski.jpg": {
+      "alt": "James reclining on a giant teddy bear with a laptop on his lap at Cal Hacks.",
+      "note": "We built TouchSpace at Cal Hacks 13.0, interactive tactile maps of indoor spaces for blind and visually impaired visitors. [Read more about our project](/projects/touchspace)"
+    },
+    "3-roadside-demo.jpg": {
+      "alt": "James and his teammate demonstrating a tactile tablet and laptop on the hood of a parked car."
+    },
+    "4-golden-gate-bridge.jpg": {
+      "alt": "The Golden Gate Bridge carrying traffic toward brown hills under a clear blue sky, framed by coastal shrubs."
+    },
+    "5-berkeley-balustrade.jpg": {
+      "alt": "James wearing sunglasses and headphones around his neck, leaning on a stone balustrade beneath sunlit trees at Berkeley."
+    },
+    "6-google-honeycomb.jpg": {
+      "alt": "James peering through a yellow honeycomb sculpture beside a green Android mascot at Google."
+    },
+    "7-nvidia-stairs.jpg": {
+      "alt": "James using a laptop on outdoor steps beside an illuminated NVIDIA sign and its reflection in water at night."
+    },
+    "8-stanford-pars-pro-toto.jpg": {
+      "alt": "James in a Berkeley shirt sitting on a polished stone sphere at Stanford, with campus buildings behind him."
+    }
+  }
+}

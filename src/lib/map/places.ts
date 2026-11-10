@@ -1,8 +1,8 @@
 // Build-time place data for the travels map.
 //
-// Place definitions live in src/content/places/places.json. Photos live in
-// src/assets/travel/<place-id>/; numeric filename prefixes set their order.
-// Optional alt text, a note and a link live beside them in photos.json, keyed
+// Each src/assets/travel/<place-id>/place.json defines the place; its directory
+// name is its ID. Photos live beside it; numeric filename prefixes set order.
+// Optional alt text, a note and a link live under `photos` in place.json, keyed
 // by the full image filename. Notes are a sentence or a few; `[text](href)` in
 // a note becomes an inline link, and `link` ({ label, href }) adds a link line
 // under the note.
@@ -18,18 +18,15 @@ export type PlacePhoto = {
 	link?: Link;
 };
 
-type PhotoMetadata = Partial<Omit<PlacePhoto, 'image'>>;
+type PlaceData = CollectionEntry<'places'>['data'];
 
-export type Place = CollectionEntry<'places'>['data'] & {
+export type Place = Omit<PlaceData, 'photos'> & {
+	id: string;
 	photos: PlacePhoto[];
 };
 
 const travelImages = import.meta.glob<ImageMetadata>(
 	'../../assets/travel/*/*.{avif,gif,jpeg,jpg,png,svg,webp}',
-	{ eager: true, import: 'default' },
-);
-const travelMetadata = import.meta.glob<Record<string, PhotoMetadata>>(
-	'../../assets/travel/*/photos.json',
 	{ eager: true, import: 'default' },
 );
 
@@ -41,9 +38,12 @@ const descriptionFromFilename = (filename: string) =>
 		.replace(/^\d+[-_ ]*/, '')
 		.replace(/[-_]+/g, ' ');
 
-const loadPhotos = ({ id, name }: Place): PlacePhoto[] => {
+const loadPhotos = ({
+	id,
+	name,
+	photos: metadata,
+}: PlaceData & { id: string }): PlacePhoto[] => {
 	const directory = `../../assets/travel/${id}/`;
-	const metadata = travelMetadata[`${directory}photos.json`] ?? {};
 
 	return Object.entries(travelImages)
 		.filter(([path]) => path.startsWith(directory))
@@ -65,10 +65,10 @@ const loadPhotos = ({ id, name }: Place): PlacePhoto[] => {
 		});
 };
 
-/** Every place with its photos, in places.json order. */
+/** Every place with its directory ID and photos. */
 export const getPlaces = async (): Promise<Place[]> =>
-	(await getCollection('places')).map(({ data }) => {
-		const place = { ...data, photos: [] };
+	(await getCollection('places')).map(({ id, data }) => {
+		const place = { ...data, id };
 		return { ...place, photos: loadPhotos(place) };
 	});
 

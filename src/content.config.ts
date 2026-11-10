@@ -1,5 +1,5 @@
 import { defineCollection } from 'astro:content';
-import { file, glob } from 'astro/loaders';
+import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
 const link = z.object({ label: z.string(), href: z.string().url() });
@@ -47,14 +47,27 @@ const pages = defineCollection({
 });
 
 const places = defineCollection({
-	loader: file('src/content/places/places.json'),
+	loader: glob({
+		pattern: '*/place.json',
+		base: './src/assets/travel',
+		generateId: ({ entry }) => entry.split('/')[0],
+	}),
 	schema: z.object({
-		id: z.string(), // matches src/assets/travel/<id>/
 		name: z.string(),
 		latitude: z.number().min(-90).max(90),
 		longitude: z.number().min(-180).max(180),
 		note: z.string().optional(), // a sentence or a few; [text](href) links
 		link: link.optional(), // shown under the note
+		photos: z
+			.record(
+				z.string(),
+				z.object({
+					alt: z.string().optional(),
+					note: z.string().optional(),
+					link: link.optional(),
+				}),
+			)
+			.default({}),
 	}),
 });
 
