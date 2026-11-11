@@ -2,14 +2,13 @@
   "name": "Hong Kong",
   "latitude": 22.3193,
   "longitude": 114.1694,
+  "note": "I grew up and study in Hong Kong. The city is packed with memories and adventures, from hiking to larping to exploring its rich local heritage.",
   "photos": {
     "1-victoria-harbor.jpeg": {
-      "alt": "Victoria Harbour at sunset, with the Hong Kong Convention and Exhibition Centre and skyscrapers silhouetted against an orange sky.",
-      "note": "Home"
+      "alt": "Victoria Harbour at sunset, with the Hong Kong Convention and Exhibition Centre and skyscrapers silhouetted against an orange sky."
     },
     "2-hkstp.jpeg": {
-      "alt": "James in an orange shirt pointing at the HKSTP logo on a wood-panelled wall.",
-      "note": "Science Park"
+      "alt": "James in an orange shirt pointing at the HKSTP logo on a wood-panelled wall."
     },
     "3-hkoscon.jpg": {
       "alt": "James presenting a slide about terminal user interfaces to an audience at a conference.",

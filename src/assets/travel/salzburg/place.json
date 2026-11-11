@@ -2,14 +2,22 @@
   "name": "Salzburg",
   "latitude": 47.8095,
   "longitude": 13.055,
-  "note": "Hiking in the early morning.",
+  "note": "The birthplace of Mozart, went hiking in the early morning.",
   "photos": {
+    "field.jpg": {
+      "alt": "A broad green meadow bordered by trees near Salzburg, with a mountain to the right beneath a blue sky dotted with white clouds."
+    },
     "spring.jpeg": {
       "alt": "Pink-lit fountain in Salzburg at dusk, with the old city buildings and a church tower behind it."
     },
     "hiking.jpeg": {
-      "alt": "Wildflowers and grasses on a hillside overlooking a mountain beneath a pink evening sky.",
-      "note": "Went hiking at 4am"
+      "alt": "Wildflowers and grasses on a hillside overlooking a mountain beneath a pink evening sky."
+    },
+    "river.jpg": {
+      "alt": "The Salzach River at dusk, reflecting riverside lights, with Salzburg's old town and illuminated church towers beneath a cloud-streaked blue sky."
+    },
+    "street.jpg": {
+      "alt": "A Salzburg sidewalk beneath a tree in early morning sunlight, with pastel buildings lining the street and golden clouds glowing near the horizon."
     }
   }
 }

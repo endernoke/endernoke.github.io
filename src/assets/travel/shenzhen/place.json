@@ -2,18 +2,16 @@
   "name": "Shenzhen",
   "latitude": 22.5431,
   "longitude": 114.0579,
+  "note": "I spent a substantial portion of my childhood in a small neighborhood in the so-called Silicon Valley of China, though I'm far from familiar with the city. I'd love to explore scenes like Huaqiangbei when I have a chance.",
   "photos": {
     "bookstore.jpeg": {
-      "alt": "Circular illuminated bookshelves inside the famous Zhongshuge bookstore",
-      "note": "Also home"
+      "alt": "Circular illuminated bookshelves inside the famous Zhongshuge bookstore"
     },
     "stairs.jpg": {
-      "alt": "A staircase lit in blue and pink in a metro station",
-      "note": "I grinded leetcode here"
+      "alt": "A staircase lit in blue and pink in a metro station"
     },
     "strength-building.jpg": {
-      "alt": "Two friends posing next to a Strength Building sign, creating a modern counterfeit of a heroic Soviet propaganda poster.",
-      "note": "Strength building at Strength Building (near Hi-Tech Park)"
+      "alt": "Two friends posing next to a Strength Building sign, creating a modern counterfeit of a heroic Soviet propaganda poster."
     }
   }
 }

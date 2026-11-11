@@ -1,0 +1,23 @@
+{
+  "name": "Germany",
+  "latitude": 52.52,
+  "longitude": 13.405,
+  "note": "My first overseas trip after the pandemic was a ten-day school tour to Germany and Austria. Half the time was spent on the road, but I've since fallen in love with the picturesque and laid-back towns. The food was, in fact, better than expected.",
+  "photos": {
+    "berlin-reichstag.jpg": {
+      "alt": "The columned façade of Berlin's Reichstag, partly framed by a leafy tree beneath a blue sky."
+    },
+    "munich-nationaltheater.jpg": {
+      "alt": "Munich's Nationaltheater with pink and purple lighting on its columns, sculpted pediments and a rooftop flag beneath grey clouds."
+    },
+    "nuremberg-lake.jpg": {
+      "alt": "Purple wildflowers and reeds along a lake in Nuremberg, with a tree-lined far shore under grey clouds."
+    },
+    "nuremberg-rooftops.jpg": {
+      "alt": "Red-tiled rooftops and half-timbered houses in Nuremberg, with green church spires rising above the old town."
+    },
+    "nuremberg-st-lorenz-church.jpg": {
+      "alt": "The ornate rose window and carved Gothic stonework on the façade of St. Lorenz Church in Nuremberg."
+    }
+  }
+}
